@@ -11,7 +11,7 @@ create table if not exists public.store_settings (
     tagline text not null default 'APMC-Direct Fresh Produce',
     subtitle text default 'Farm Fresh Vegetables & Fruits at Mandi Wholesale Prices',
     address text not null default 'APMC Yard Gate #3, Yeshwanthpur, Bengaluru, Karnataka 560022',
-    whatsapp_number text not null default '919876543210',
+    whatsapp_number text not null default '918970050327',
     operating_hours jsonb not null default '{
         "Monday": "6:00 AM - 9:00 PM",
         "Tuesday": "6:00 AM - 9:00 PM",

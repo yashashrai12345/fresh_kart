@@ -136,7 +136,7 @@ export default function Settings({ settings, onUpdateSettings }) {
                     style={{ paddingLeft: '38px', fontWeight: 600 }}
                     value={formData.whatsapp_number || ''}
                     onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
-                    placeholder="919876543210"
+                    placeholder="918970050327"
                   />
                 </div>
                 <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '6px' }}>

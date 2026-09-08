@@ -4,7 +4,7 @@ export const INITIAL_SETTINGS = {
   tagline: 'APMC-Direct Fresh Produce',
   subtitle: 'Farm Fresh Vegetables & Fruits at Mandi Wholesale Rates',
   address: 'APMC Yard Gate #3, Yeshwanthpur, Bengaluru, Karnataka 560022',
-  whatsapp_number: '919876543210',
+  whatsapp_number: '918970050327',
   operating_hours: {
     Monday: '6:00 AM - 9:00 PM',
     Tuesday: '6:00 AM - 9:00 PM',

@@ -12,7 +12,7 @@ insert into public.store_settings (
     'APMC-Direct Fresh Produce',
     'Farm Fresh Vegetables & Fruits at Mandi Wholesale Rates',
     'APMC Yard Gate #3, Yeshwanthpur, Bengaluru, Karnataka 560022',
-    '919876543210',
+    '918970050327',
     '{
         "Monday": "6:00 AM - 9:00 PM",
         "Tuesday": "6:00 AM - 9:00 PM",

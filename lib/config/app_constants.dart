@@ -21,7 +21,7 @@ class AppConstants {
   static const String defaultSubtitle = 'Farm Fresh Vegetables & Fruits at Mandi Rates';
   static const String defaultAddress =
       'APMC Yard Gate #3, Yeshwanthpur, Bengaluru, Karnataka 560022';
-  static const String defaultWhatsAppNumber = '919876543210';
+  static const String defaultWhatsAppNumber = '918970050327';
   static const double defaultFreeDeliveryThreshold = 250.0;
   static const double defaultDeliveryFee = 30.0;
 

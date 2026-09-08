@@ -114,7 +114,7 @@ void main() {
       );
 
       const settings = StoreSettingsModel(
-        whatsappNumber: '919876543210',
+        whatsappNumber: '918970050327',
         freeDeliveryThreshold: 250.0,
       );
 
