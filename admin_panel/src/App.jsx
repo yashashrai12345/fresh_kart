@@ -7,8 +7,6 @@ import {
   Settings as SettingsIcon,
   LogOut,
   Sparkles,
-  ExternalLink,
-  MessageCircle,
   Bell,
   Menu,
   X
@@ -261,29 +259,24 @@ export default function App() {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              backgroundColor: '#ecfdf5',
-              padding: '6px 12px',
+              gap: '8px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              padding: '6px 14px',
               borderRadius: '9999px',
               fontSize: '0.8rem',
-              color: '#047857',
+              color: '#475569',
               fontWeight: 600
             }}>
-              <MessageCircle size={15} color="#10b981" />
-              WhatsApp: +{settings.whatsapp_number}
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: isSupabaseConfigured ? '#10b981' : '#f59e0b',
+                boxShadow: isSupabaseConfigured ? '0 0 0 3px rgba(16, 185, 129, 0.2)' : 'none'
+              }} />
+              {isSupabaseConfigured ? 'Live Cloud Sync' : 'Local Mode'}
             </div>
-
-            <button
-              onClick={() => {
-                const text = encodeURIComponent('Hi Fresh Kart Store Support!');
-                window.open(`https://wa.me/${settings.whatsapp_number}?text=${text}`, '_blank');
-              }}
-              className="btn btn-secondary btn-sm"
-              title="Test WhatsApp Link"
-            >
-              <ExternalLink size={14} />
-              Open WhatsApp
-            </button>
           </div>
         </header>
 
