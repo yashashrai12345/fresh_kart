@@ -84,7 +84,7 @@ void main() {
         id: 'FK-9999',
         deviceId: 'device_test',
         customerName: 'Aarav Patel',
-        customerPhone: '9876543210',
+        customerPhone: '8970050327',
         deliveryAddress: 'Flat 102, Green Meadows, Indiranagar',
         items: [
           OrderItemSummary(
@@ -130,7 +130,7 @@ void main() {
       expect(message.contains('Delivery Fee: ₹30'), isTrue);
       expect(message.contains('*Grand Total: ₹118*'), isTrue);
       expect(message.contains('Flat 102, Green Meadows, Indiranagar'), isTrue);
-      expect(message.contains('9876543210'), isTrue);
+      expect(message.contains('8970050327'), isTrue);
       expect(message.contains('Please confirm my order!'), isTrue);
     });
   });

@@ -29,7 +29,12 @@ function getLocalData(key, fallback) {
       localStorage.setItem(key, JSON.stringify(fallback));
       return fallback;
     }
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    if (key === STORAGE_KEYS.SETTINGS && data && data.whatsapp_number === '919876543210') {
+      data.whatsapp_number = '918970050327';
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+    return data;
   } catch (e) {
     console.error('LocalStorage error:', e);
     return fallback;
@@ -102,7 +107,10 @@ export const storeService = {
   async getSettings() {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.from('store_settings').select('*').limit(1).single();
-      if (!error && data) return data;
+      if (!error && data) {
+        setLocalData(STORAGE_KEYS.SETTINGS, data);
+        return data;
+      }
     }
     return getLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
   },

@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, CheckCircle2, MessageCircle, Clock, ShieldCheck, MapPin, Truck } from 'lucide-react';
 
 export default function Settings({ settings, onUpdateSettings }) {
   const [formData, setFormData] = useState({ ...settings });
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setFormData({ ...settings });
+    }
+  }, [settings]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
