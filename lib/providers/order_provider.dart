@@ -24,23 +24,39 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final deviceId = await StorageService.getDeviceId();
-      _orders = await SupabaseService.getOrdersForDevice(deviceId);
-      // Start a live subscription to all this device's orders so that
-      // any admin status change is reflected immediately in the app.
-      _startAllOrdersSubscription(deviceId);
+      final userId = SupabaseService.currentUserId;
+
+      if (userId != null) {
+        // Authenticated user: fetch by user_id
+        _orders = await SupabaseService.getOrdersForUser(userId);
+        _startAllOrdersSubscription(userId: userId);
+      } else {
+        // Unauthenticated fallback: device-based
+        final deviceId = await StorageService.getDeviceId();
+        _orders = await SupabaseService.getOrdersForDevice(deviceId);
+        _startAllOrdersSubscription(deviceId: deviceId);
+      }
     } catch (e) {
       debugPrint('Error loading orders: $e');
+      // Fallback to local orders
+      _orders = StorageService.getLocalOrders();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Subscribe to live updates for every order belonging to this device.
-  void _startAllOrdersSubscription(String deviceId) {
+  // Subscribe to live updates for orders
+  void _startAllOrdersSubscription({String? userId, String? deviceId}) {
     _allOrdersSubscription?.cancel();
-    final stream = SupabaseService.subscribeToDeviceOrders(deviceId);
+
+    Stream<List<OrderModel>>? stream;
+    if (userId != null) {
+      stream = SupabaseService.subscribeToUserOrders(userId);
+    } else if (deviceId != null) {
+      stream = SupabaseService.subscribeToDeviceOrders(deviceId);
+    }
+
     if (stream != null) {
       _allOrdersSubscription = stream.listen((updatedOrders) {
         _orders = updatedOrders;
@@ -90,6 +106,7 @@ class OrderProvider extends ChangeNotifier {
     required StoreSettingsModel settings,
   }) async {
     final deviceId = await StorageService.getDeviceId();
+    final userId = SupabaseService.currentUserId; // null if not authenticated
 
     // Generate unique readable order code
     final randomCode = 1000 + Random().nextInt(9000);
@@ -117,6 +134,7 @@ class OrderProvider extends ChangeNotifier {
     final order = OrderModel(
       id: orderId,
       deviceId: deviceId,
+      userId: userId, // Associate with authenticated user if available
       customerName: customerName,
       customerPhone: customerPhone,
       deliveryAddress: deliveryAddress,

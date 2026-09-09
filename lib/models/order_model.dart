@@ -45,6 +45,7 @@ class OrderItemSummary {
 class OrderModel {
   final String id;
   final String deviceId;
+  final String? userId; // Supabase auth.uid() — nullable for backward compat
   final String customerName;
   final String customerPhone;
   final String deliveryAddress;
@@ -59,6 +60,7 @@ class OrderModel {
   const OrderModel({
     required this.id,
     required this.deviceId,
+    this.userId,
     required this.customerName,
     required this.customerPhone,
     required this.deliveryAddress,
@@ -102,6 +104,7 @@ class OrderModel {
     return OrderModel(
       id: json['id'] as String,
       deviceId: json['device_id'] as String? ?? '',
+      userId: json['user_id'] as String?,
       customerName: json['customer_name'] as String? ?? 'Customer',
       customerPhone: json['customer_phone'] as String? ?? '',
       deliveryAddress: json['delivery_address'] as String? ?? '',
@@ -121,6 +124,7 @@ class OrderModel {
     return {
       'id': id,
       'device_id': deviceId,
+      if (userId != null) 'user_id': userId,
       'customer_name': customerName,
       'customer_phone': customerPhone,
       'delivery_address': deliveryAddress,

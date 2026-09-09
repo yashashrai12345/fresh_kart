@@ -51,11 +51,15 @@ export default function App() {
   };
 
   useEffect(() => {
-    const user = storeService.getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
-    }
-    loadStoreData();
+    // SECURITY: Restore session from Supabase, not just from localStorage
+    const initApp = async () => {
+      const user = await storeService.restoreSession();
+      if (user) {
+        setCurrentUser(user);
+      }
+      await loadStoreData();
+    };
+    initApp();
 
     // Setup Supabase Realtime listeners if connected
     if (isSupabaseConfigured && supabase) {
@@ -164,8 +168,25 @@ export default function App() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-icon">
-            <ShoppingBag size={22} />
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            overflow: 'hidden',
+            flexShrink: 0,
+          }}>
+            <img
+              src="/logo/fresh_kart_icon.jpg"
+              alt="Fresh Kart"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.style.background = 'linear-gradient(135deg, #10b981, #047857)';
+                e.target.parentElement.style.display = 'flex';
+                e.target.parentElement.style.alignItems = 'center';
+                e.target.parentElement.style.justifyContent = 'center';
+              }}
+            />
           </div>
           <div>
             <div className="brand-title">FRESH KART</div>

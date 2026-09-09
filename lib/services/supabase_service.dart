@@ -13,6 +13,7 @@ class SupabaseService {
   static SupabaseClient? _client;
 
   static SupabaseClient? get client => _client;
+  static bool get isInitialized => _initialized;
 
   static Future<void> init() async {
     if (AppConstants.isSupabaseConfigured) {
@@ -44,7 +45,12 @@ class SupabaseService {
     }
   }
 
-  // --- CATALOG DATA (Categories & Products) ---
+  // ── Convenience getter for the current authenticated user ────────────────
+
+  static String? get currentUserId => _client?.auth.currentUser?.id;
+
+  // ── CATALOG DATA (Categories & Products) ─────────────────────────────────
+
   static Future<List<CategoryModel>> getCategories() async {
     if (_initialized && _client != null) {
       try {
@@ -98,7 +104,8 @@ class SupabaseService {
     return const StoreSettingsModel();
   }
 
-  // --- ORDERS ---
+  // ── ORDERS ────────────────────────────────────────────────────────────────
+
   static Future<void> createOrder(OrderModel order) async {
     // 1. Always save locally first so user never loses order history
     await StorageService.saveLocalOrder(order);
@@ -106,7 +113,7 @@ class SupabaseService {
     // 2. Sync to Supabase if connected
     if (_initialized && _client != null) {
       try {
-        await _client!.from('orders').insert({
+        final payload = {
           'id': order.id,
           'device_id': order.deviceId,
           'customer_name': order.customerName,
@@ -119,13 +126,38 @@ class SupabaseService {
           'status': order.status,
           'notes': order.notes,
           'whatsapp_sent': true,
-        });
+        };
+        // Include user_id if authenticated
+        if (order.userId != null) {
+          payload['user_id'] = order.userId!;
+        }
+        await _client!.from('orders').insert(payload);
       } catch (e) {
         debugPrint('Error syncing order to Supabase: $e');
       }
     }
   }
 
+  /// Fetch orders for an authenticated user (primary method post-auth)
+  static Future<List<OrderModel>> getOrdersForUser(String userId) async {
+    if (_initialized && _client != null) {
+      try {
+        final data = await _client!
+            .from('orders')
+            .select()
+            .eq('user_id', userId)
+            .order('created_at', ascending: false);
+        return (data as List)
+            .map((o) => OrderModel.fromJson(o as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        debugPrint('Error fetching user orders from Supabase: $e');
+      }
+    }
+    return StorageService.getLocalOrders();
+  }
+
+  /// Legacy: fetch orders by device_id (fallback for unauthenticated users)
   static Future<List<OrderModel>> getOrdersForDevice(String deviceId) async {
     if (_initialized && _client != null) {
       try {
@@ -157,7 +189,20 @@ class SupabaseService {
     return null;
   }
 
-  // Realtime subscription for ALL orders of a device (updates orders list live)
+  // Realtime subscription for all orders of a user
+  static Stream<List<OrderModel>>? subscribeToUserOrders(String userId) {
+    if (_initialized && _client != null) {
+      return _client!
+          .from('orders')
+          .stream(primaryKey: ['id'])
+          .eq('user_id', userId)
+          .order('created_at', ascending: false)
+          .map((list) => list.map((o) => OrderModel.fromJson(o)).toList());
+    }
+    return null;
+  }
+
+  // Legacy: Realtime for device-based orders (backward compat)
   static Stream<List<OrderModel>>? subscribeToDeviceOrders(String deviceId) {
     if (_initialized && _client != null) {
       return _client!
@@ -186,7 +231,57 @@ class SupabaseService {
     return null;
   }
 
-  // Initial Local APMC Catalog Data (Guarantees immediate zero-setup execution)
+  // ── WISHLIST (Supabase-backed when authenticated) ─────────────────────────
+
+  /// Fetch user wishlist product IDs from Supabase
+  static Future<List<String>> getWishlistForUser(String userId) async {
+    if (_initialized && _client != null) {
+      try {
+        final data = await _client!
+            .from('wishlist')
+            .select('product_id')
+            .eq('user_id', userId);
+        return (data as List)
+            .map((w) => w['product_id'] as String)
+            .toList();
+      } catch (e) {
+        debugPrint('Error fetching wishlist from Supabase: $e');
+      }
+    }
+    return [];
+  }
+
+  /// Add a product to the user's wishlist in Supabase
+  static Future<void> addToWishlist(String userId, String productId) async {
+    if (_initialized && _client != null) {
+      try {
+        await _client!.from('wishlist').upsert({
+          'user_id': userId,
+          'product_id': productId,
+        });
+      } catch (e) {
+        debugPrint('Error adding to wishlist: $e');
+      }
+    }
+  }
+
+  /// Remove a product from the user's wishlist in Supabase
+  static Future<void> removeFromWishlist(String userId, String productId) async {
+    if (_initialized && _client != null) {
+      try {
+        await _client!
+            .from('wishlist')
+            .delete()
+            .eq('user_id', userId)
+            .eq('product_id', productId);
+      } catch (e) {
+        debugPrint('Error removing from wishlist: $e');
+      }
+    }
+  }
+
+  // ── Initial Local APMC Catalog Data ──────────────────────────────────────
+
   static final List<CategoryModel> _localCategories = [
     const CategoryModel(id: 'cat_veg', name: 'Fresh Vegetables', slug: 'vegetables', icon: 'carrot', sortOrder: 1),
     const CategoryModel(id: 'cat_greens', name: 'Leafy Greens & Herbs', slug: 'leafy-greens', icon: 'sprout', sortOrder: 2),

@@ -13,13 +13,12 @@ export const supabase = isSupabaseConfigured
   ? createClient(cleanUrl, supabaseAnonKey)
   : null;
 
-// LocalStorage helpers for offline/standalone mode
+// LocalStorage helpers for offline/standalone mode (catalog data only - NOT auth)
 const STORAGE_KEYS = {
   SETTINGS: 'freshkart_admin_settings',
   CATEGORIES: 'freshkart_admin_categories',
   PRODUCTS: 'freshkart_admin_products',
   ORDERS: 'freshkart_admin_orders',
-  AUTH: 'freshkart_admin_auth'
 };
 
 function getLocalData(key, fallback) {
@@ -51,45 +50,44 @@ function setLocalData(key, data) {
 
 export const storeService = {
   // --- AUTH ---
+  // SECURITY: Admin login strictly requires successful Supabase Auth.
+  // There is NO fallback fake session — if Supabase auth fails, login fails.
   async login(email, password) {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data?.user) {
-          const user = {
-            id: data.user.id,
-            email: data.user.email,
-            role: 'admin',
-            name: data.user.user_metadata?.name || 'Fresh Kart Owner'
-          };
-          localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(user));
-          return user;
-        }
-      } catch (authErr) {
-        console.warn('Supabase Auth error, using admin login:', authErr);
-      }
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error(
+        'Supabase is not configured. Admin login requires a live Supabase connection. ' +
+        'Please check your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.'
+      );
     }
-    // Demo or fallback admin session
-    const user = {
-      id: 'admin_01',
-      email: email || 'admin@freshkart.com',
-      role: 'admin',
-      name: 'Fresh Kart Admin'
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error || !data?.user) {
+      throw new Error(error?.message || 'Invalid email or password. Please try again.');
+    }
+
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      name: data.user.user_metadata?.name || 'Fresh Kart Admin',
     };
-    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(user));
-    return user;
   },
 
-  getCurrentUser() {
-    const local = localStorage.getItem(STORAGE_KEYS.AUTH);
-    if (local) {
-      try {
-        return JSON.parse(local);
-      } catch (e) {
-        console.error('Error parsing stored user:', e);
-      }
+  // Restore session from Supabase (call on app startup)
+  async restoreSession() {
+    if (!isSupabaseConfigured || !supabase) return null;
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.user) return null;
+      return {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.user_metadata?.name || 'Fresh Kart Admin',
+      };
+    } catch (e) {
+      console.warn('Session restore error:', e);
+      return null;
     }
-    return null;
   },
 
   async logout() {
@@ -100,12 +98,11 @@ export const storeService = {
         console.warn('SignOut error:', e);
       }
     }
-    localStorage.removeItem(STORAGE_KEYS.AUTH);
   },
 
   // --- SETTINGS ---
   async getSettings() {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.from('store_settings').select('*').limit(1).single();
       if (!error && data) {
         setLocalData(STORAGE_KEYS.SETTINGS, data);
@@ -116,14 +113,18 @@ export const storeService = {
   },
 
   async updateSettings(newSettings) {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('store_settings')
         .update({ ...newSettings, updated_at: new Date().toISOString() })
         .eq('id', newSettings.id)
         .select()
         .single();
-      if (!error && data) return data;
+      if (error) throw new Error(error.message || 'Failed to update settings');
+      if (data) {
+        setLocalData(STORAGE_KEYS.SETTINGS, data);
+        return data;
+      }
     }
     setLocalData(STORAGE_KEYS.SETTINGS, newSettings);
     return newSettings;
@@ -131,7 +132,7 @@ export const storeService = {
 
   // --- CATEGORIES ---
   async getCategories() {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -158,26 +159,41 @@ export const storeService = {
       categories.push(catToSave);
     }
 
-    if (isSupabaseConfigured) {
-      await supabase.from('categories').upsert(catToSave);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('categories').upsert(catToSave);
+      if (error) throw new Error(error.message || 'Failed to save category');
     }
     setLocalData(STORAGE_KEYS.CATEGORIES, categories);
     return categories;
   },
 
   async deleteCategory(id) {
+    // First check if category has products — Supabase cascade will handle it
+    // but we want to warn the admin explicitly
+    const products = await this.getProducts();
+    const productCount = products.filter(p => p.category_id === id).length;
+    if (productCount > 0) {
+      throw new Error(
+        `Cannot delete: this category has ${productCount} product(s). ` +
+        `Please reassign or delete those products first.`
+      );
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('categories').delete().eq('id', id);
+      if (error) throw new Error(error.message || 'Failed to delete category from database');
+    }
+
+    // Only update local cache after successful Supabase deletion
     let categories = await this.getCategories();
     categories = categories.filter(c => c.id !== id);
-    if (isSupabaseConfigured) {
-      await supabase.from('categories').delete().eq('id', id);
-    }
     setLocalData(STORAGE_KEYS.CATEGORIES, categories);
     return categories;
   },
 
   // --- PRODUCTS ---
   async getProducts() {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -204,8 +220,9 @@ export const storeService = {
       products.unshift(prodToSave);
     }
 
-    if (isSupabaseConfigured) {
-      await supabase.from('products').upsert(prodToSave);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('products').upsert(prodToSave);
+      if (error) throw new Error(error.message || 'Failed to save product');
     }
     setLocalData(STORAGE_KEYS.PRODUCTS, products);
     return products;
@@ -214,26 +231,30 @@ export const storeService = {
   async toggleProductStock(id, inStock) {
     let products = await this.getProducts();
     products = products.map(p => p.id === id ? { ...p, in_stock: inStock } : p);
-    if (isSupabaseConfigured) {
-      await supabase.from('products').update({ in_stock: inStock }).eq('id', id);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('products').update({ in_stock: inStock }).eq('id', id);
+      if (error) throw new Error(error.message || 'Failed to update stock status');
     }
     setLocalData(STORAGE_KEYS.PRODUCTS, products);
     return products;
   },
 
   async deleteProduct(id) {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw new Error(error.message || 'Failed to delete product from database');
+    }
+
+    // Only update local cache after successful Supabase deletion
     let products = await this.getProducts();
     products = products.filter(p => p.id !== id);
-    if (isSupabaseConfigured) {
-      await supabase.from('products').delete().eq('id', id);
-    }
     setLocalData(STORAGE_KEYS.PRODUCTS, products);
     return products;
   },
 
   // --- ORDERS ---
   async getOrders() {
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
@@ -244,11 +265,19 @@ export const storeService = {
   },
 
   async updateOrderStatus(orderId, newStatus) {
-    let orders = await this.getOrders();
-    orders = orders.map(o => o.id === orderId ? { ...o, status: newStatus, updated_at: new Date().toISOString() } : o);
-    if (isSupabaseConfigured) {
-      await supabase.from('orders').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', orderId);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+      if (error) throw new Error(error.message || 'Failed to update order status');
     }
+
+    let orders = await this.getOrders();
+    orders = orders.map(o => o.id === orderId
+      ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
+      : o
+    );
     setLocalData(STORAGE_KEYS.ORDERS, orders);
     return orders;
   }

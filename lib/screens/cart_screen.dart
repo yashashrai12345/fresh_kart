@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
+import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/order_provider.dart';
 import '../providers/store_provider.dart';
@@ -31,7 +32,11 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     _nameController.text = StorageService.getSavedName();
-    _phoneController.text = StorageService.getSavedPhone();
+    // Pre-fill phone from Supabase auth user if available, else from saved prefs
+    final authPhone = context.read<AuthProvider>().currentUserPhoneShort;
+    _phoneController.text = authPhone.isNotEmpty
+        ? authPhone
+        : StorageService.getSavedPhone();
     _addressController.text = StorageService.getSavedAddress();
   }
 

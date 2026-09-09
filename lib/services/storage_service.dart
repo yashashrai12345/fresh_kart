@@ -11,7 +11,7 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // Device ID for anonymous customer tracking
+  // Device ID for anonymous customer tracking (backup identity)
   static Future<String> getDeviceId() async {
     _prefs ??= await SharedPreferences.getInstance();
     String? deviceId = _prefs?.getString(AppConstants.keyDeviceId);
@@ -79,7 +79,25 @@ class StorageService {
     await _prefs?.setStringList(AppConstants.keyWishlist, list);
   }
 
+  /// Directly set the wishlist to a specific list (used for Supabase sync)
+  static Future<void> setWishlist(List<String> productIds) async {
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs?.setStringList(AppConstants.keyWishlist, productIds);
+  }
+
   static List<String> getWishlist() {
     return _prefs?.getStringList(AppConstants.keyWishlist) ?? [];
+  }
+
+  /// Clear authentication-sensitive session data (call on logout).
+  /// Keeps cart and order history intact.
+  static Future<void> clearAuthSession() async {
+    _prefs ??= await SharedPreferences.getInstance();
+    // Clear saved name/phone/address as they are tied to the auth session
+    await _prefs?.remove(AppConstants.keySavedName);
+    await _prefs?.remove(AppConstants.keySavedPhone);
+    await _prefs?.remove(AppConstants.keySavedAddress);
+    // Clear local wishlist (will reload from Supabase on next login)
+    await _prefs?.remove(AppConstants.keyWishlist);
   }
 }

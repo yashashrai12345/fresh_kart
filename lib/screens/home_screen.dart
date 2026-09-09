@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
+import '../providers/auth_provider.dart';
 import '../providers/catalog_provider.dart';
 import '../providers/order_provider.dart';
 import '../providers/store_provider.dart';
@@ -28,10 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<AuthProvider>().currentUser?.id;
       context.read<StoreProvider>().loadSettings();
       context.read<CatalogProvider>().loadCatalog();
       context.read<OrderProvider>().loadOrders();
-      context.read<WishlistProvider>().init();
+      context.read<WishlistProvider>().init(userId: userId);
     });
   }
 
@@ -70,27 +72,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                       child: Row(
                         children: [
-                          // Brand Avatar
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppTheme.primary, AppTheme.primaryDark],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.35),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                          // Brand Logo
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/logo/fresh_kart_icon.jpg',
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [AppTheme.primary, AppTheme.primaryDark],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
+                                child: const Icon(Icons.shopping_basket_rounded,
+                                    color: Colors.white, size: 24),
+                              ),
                             ),
-                            child: const Icon(Icons.shopping_basket_rounded,
-                                color: Colors.white, size: 24),
                           ),
                           const SizedBox(width: 12),
 

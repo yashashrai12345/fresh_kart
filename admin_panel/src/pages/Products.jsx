@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import {
   Plus,
   Search,
-  Filter,
   Edit2,
   Trash2,
-  Check,
   X,
-  Sparkles,
+  CheckCircle,
   AlertCircle,
-  Tag
 } from 'lucide-react';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 
 export default function Products({
   products,
@@ -24,6 +22,21 @@ export default function Products({
   const [stockFilter, setStockFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, name }
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  // Success notification
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const showSuccess = (msg) => {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(''), 3500);
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -73,24 +86,52 @@ export default function Products({
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const productToSave = {
-      ...(editingProduct ? { id: editingProduct.id } : {}),
-      name: formData.name,
-      category_id: formData.category_id,
-      description: formData.description,
-      price: Number(formData.price),
-      mrp: Number(formData.mrp),
-      unit: formData.unit,
-      diet_tag: formData.diet_tag,
-      photo_url: formData.photo_url,
-      in_stock: Boolean(formData.in_stock),
-      stock_left: formData.stock_left !== '' ? Number(formData.stock_left) : null
-    };
+    setSaveError('');
+    setIsSaving(true);
+    try {
+      const productToSave = {
+        ...(editingProduct ? { id: editingProduct.id } : {}),
+        name: formData.name,
+        category_id: formData.category_id,
+        description: formData.description,
+        price: Number(formData.price),
+        mrp: Number(formData.mrp),
+        unit: formData.unit,
+        diet_tag: formData.diet_tag,
+        photo_url: formData.photo_url,
+        in_stock: Boolean(formData.in_stock),
+        stock_left: formData.stock_left !== '' ? Number(formData.stock_left) : null
+      };
+      await onSaveProduct(productToSave);
+      setIsModalOpen(false);
+      showSuccess(editingProduct ? `"${formData.name}" updated.` : `"${formData.name}" added to catalog.`);
+    } catch (err) {
+      setSaveError(err.message || 'Failed to save product');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-    onSaveProduct(productToSave);
-    setIsModalOpen(false);
+  const handleDeleteClick = (p) => {
+    setDeleteTarget({ id: p.id, name: p.name });
+    setDeleteError('');
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await onDeleteProduct(deleteTarget.id);
+      showSuccess(`"${deleteTarget.name}" removed from catalog.`);
+      setDeleteTarget(null);
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete product');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Filter products
@@ -116,6 +157,25 @@ export default function Products({
 
   return (
     <div>
+      {/* Success notification */}
+      {successMessage && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          backgroundColor: '#dcfce7',
+          color: '#166534',
+          padding: '12px 16px',
+          borderRadius: '10px',
+          marginBottom: '16px',
+          fontWeight: 600,
+          fontSize: '0.875rem',
+          border: '1px solid #bbf7d0',
+        }}>
+          <CheckCircle size={18} />
+          {successMessage}
+        </div>
+      )}
       {/* Top action bar */}
       <div style={{
         display: 'flex',
@@ -331,11 +391,7 @@ export default function Products({
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete ${p.name}?`)) {
-                              onDeleteProduct(p.id);
-                            }
-                          }}
+                          onClick={() => handleDeleteClick(p)}
                           className="btn-icon"
                           style={{ color: '#ef4444' }}
                           title="Delete Item"
@@ -364,6 +420,7 @@ export default function Products({
                 onClick={() => setIsModalOpen(false)}
                 className="btn-icon"
                 style={{ border: 'none' }}
+                disabled={isSaving}
               >
                 <X size={20} />
               </button>
@@ -508,6 +565,23 @@ export default function Products({
                     <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Item is Available in Stock for Orders</span>
                   </label>
                 </div>
+
+                {saveError && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: '#fee2e2',
+                    color: '#991b1b',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                  }}>
+                    <AlertCircle size={16} />
+                    {saveError}
+                  </div>
+                )}
               </div>
 
               <div className="modal-footer">
@@ -515,20 +589,34 @@ export default function Products({
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="btn btn-secondary"
+                  disabled={isSaving}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="btn btn-primary"
+                  disabled={isSaving}
                 >
-                  {editingProduct ? 'Save Changes' : 'Create Item'}
+                  {isSaving ? 'Saving...' : (editingProduct ? 'Save Changes' : 'Create Item')}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        itemName={deleteTarget?.name || ''}
+        itemType="product"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => { setDeleteTarget(null); setDeleteError(''); }}
+        isDeleting={isDeleting}
+        errorMessage={deleteError}
+      />
     </div>
   );
 }
+
