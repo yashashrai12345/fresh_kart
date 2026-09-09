@@ -335,6 +335,9 @@ class StoreInfoScreen extends StatelessWidget {
   Widget _buildAccountSection(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final phone = auth.currentUserPhone;
+    final email = auth.currentUserEmail;
+    final name = auth.currentUserName;
+    final avatar = auth.currentUserAvatar;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -348,30 +351,61 @@ class StoreInfoScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
+              if (avatar.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image.network(
+                    avatar,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Icon(Icons.person_rounded,
+                          color: AppTheme.primary, size: 26),
+                    ),
+                  ),
+                )
+              else
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Icon(Icons.person_rounded,
+                      color: AppTheme.primary, size: 26),
                 ),
-                child: const Icon(Icons.person_rounded,
-                    color: AppTheme.primary, size: 22),
-              ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'My Account',
-                      style: TextStyle(
-                        fontSize: 15,
+                    Text(
+                      name.isNotEmpty ? name : 'My Account',
+                      style: const TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.textMain,
                       ),
                     ),
-                    if (phone.isNotEmpty)
+                    const SizedBox(height: 2),
+                    if (email.isNotEmpty)
+                      Text(
+                        email,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textMuted,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    else if (phone.isNotEmpty)
                       Text(
                         '+91 ${auth.currentUserPhoneShort}',
                         style: const TextStyle(
@@ -379,6 +413,37 @@ class StoreInfoScreen extends StatelessWidget {
                           color: AppTheme.textMuted,
                         ),
                       ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.success.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check_circle_rounded,
+                                  color: AppTheme.success, size: 12),
+                              const SizedBox(width: 4),
+                              Text(
+                                email.isNotEmpty
+                                    ? 'Google Account'
+                                    : 'Verified Customer',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -394,7 +459,7 @@ class StoreInfoScreen extends StatelessWidget {
                   builder: (ctx) => AlertDialog(
                     title: const Text('Sign Out?'),
                     content: const Text(
-                        'You will need to verify your mobile number again next time.'),
+                        'You will need to sign in again with Google or your mobile number next time.'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, false),

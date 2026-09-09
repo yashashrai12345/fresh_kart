@@ -22,4 +22,19 @@ This directory contains the database schema and sample seed catalog for **Fresh 
    - Flutter app: `lib/config/app_constants.dart` (or via `--dart-define`)
    - Admin panel: `admin_panel/.env` (or via `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`)
 
+## Step 4: Configure Google Sign-In (OAuth)
+1. Go to your **Supabase Dashboard** > **Authentication** > **URL Configuration**.
+2. Under **Redirect URLs**, click **Add URL** and add:
+   - `io.supabase.freshkart://login-callback`
+   - (For local web testing if needed: `http://localhost:3000` or your dev server URL)
+3. Go to **Authentication** > **Providers** > **Google**.
+4. Toggle **Enable Google provider**.
+5. Obtain a **Client ID** and **Client Secret** from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
+   - In Google Cloud Console, create OAuth 2.0 Client IDs (Type: Web application).
+   - In **Authorized redirect URIs**, add your Supabase callback URL:
+     `https://<your-project-ref>.supabase.co/auth/v1/callback`
+   - Paste the generated **Client ID** and **Client Secret** into the Supabase Google provider settings.
+6. Click **Save**.
+
 *Note: Fresh Kart includes a built-in Local Fallback engine so you can test all admin and mobile app features immediately, even before configuring Supabase.*
+

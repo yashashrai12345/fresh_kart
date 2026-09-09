@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
@@ -14,9 +15,15 @@ import 'widgets/auth_gate.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage and Supabase/Local service
+  // Initialize storage, Supabase, and Firebase
   await StorageService.init();
   await SupabaseService.init();
+
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase initialization: $e');
+  }
 
   runApp(const FreshKartApp());
 }

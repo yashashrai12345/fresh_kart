@@ -42,12 +42,25 @@ dependencies:
   uuid: ^4.5.1
   google_fonts: ^6.2.1
   intl: ^0.20.1
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo/fresh_kart_icon.jpg"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/logo/fresh_kart_icon.jpg"
 
 dependency_overrides:
   # path_provider_foundation 2.6+ pulls in objective_c which has a build hook

@@ -2,10 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fresh_kart/models/order_model.dart';
 import 'package:fresh_kart/models/product_model.dart';
 import 'package:fresh_kart/models/store_settings_model.dart';
+import 'package:fresh_kart/providers/auth_provider.dart';
 import 'package:fresh_kart/providers/cart_provider.dart';
 import 'package:fresh_kart/services/whatsapp_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Fresh Kart Cart & Checkout Tests', () {
     const testTomato = ProductModel(
       id: 'test_tomato',
@@ -134,4 +137,31 @@ void main() {
       expect(message.contains('Please confirm my order!'), isTrue);
     });
   });
+
+  group('Fresh Kart AuthProvider Tests', () {
+    test('AuthProvider initializes safely without crashing', () {
+      final auth = AuthProvider();
+      expect(auth.isAuthenticated, isFalse);
+      expect(auth.currentUser, isNull);
+      expect(auth.isLoading, isFalse);
+      expect(auth.isGoogleLoading, isFalse);
+      expect(auth.currentUserName, 'Customer');
+      expect(auth.currentUserEmail, isEmpty);
+      expect(auth.currentUserPhone, isEmpty);
+    });
+
+    test('AuthProvider gracefully reports error when Supabase client is unconfigured', () async {
+      final auth = AuthProvider();
+      final googleResult = await auth.signInWithGoogle();
+      expect(googleResult, isFalse);
+      expect(auth.errorMessage, isNotNull);
+
+      final otpResult = await auth.sendOTP('9876543210');
+      expect(otpResult, isFalse);
+
+      final verifyResult = await auth.verifyOTP('9876543210', '123456');
+      expect(verifyResult, isFalse);
+    });
+  });
 }
+
