@@ -52,4 +52,12 @@ app.*.map.json
 **/dist/
 .env
 *.env.local
+**/.env
+**/.env.*
+!**/.env.example
+
+# Supabase Secrets & Temp
+supabase/service-account.json
+*service-account*.json
+supabase/.temp/
 

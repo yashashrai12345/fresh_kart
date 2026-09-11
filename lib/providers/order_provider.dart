@@ -19,17 +19,18 @@ class OrderProvider extends ChangeNotifier {
   OrderModel? get activeTrackingOrder => _activeTrackingOrder;
   bool get isLoading => _isLoading;
 
-  Future<void> loadOrders() async {
+  Future<void> loadOrders({String? userId}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final userId = SupabaseService.currentUserId;
+      // Use passed Firebase UID if provided, otherwise fall back to Supabase session (legacy)
+      final resolvedUserId = userId ?? SupabaseService.currentUserId;
 
-      if (userId != null) {
-        // Authenticated user: fetch by user_id
-        _orders = await SupabaseService.getOrdersForUser(userId);
-        _startAllOrdersSubscription(userId: userId);
+      if (resolvedUserId != null && resolvedUserId.isNotEmpty) {
+        // Authenticated user: fetch by user_id (Firebase UID stored in Supabase)
+        _orders = await SupabaseService.getOrdersForUser(resolvedUserId);
+        _startAllOrdersSubscription(userId: resolvedUserId);
       } else {
         // Unauthenticated fallback: device-based
         final deviceId = await StorageService.getDeviceId();
@@ -170,6 +171,52 @@ class OrderProvider extends ChangeNotifier {
     );
 
     return order;
+  }
+
+  /// Cancel a PLACED order. Optimistically updates local state and syncs to Supabase.
+  Future<bool> cancelOrder(String orderId) async {
+    // Optimistic UI update
+    final idx = _orders.indexWhere((o) => o.id == orderId);
+    OrderModel? original;
+    if (idx != -1 && _orders[idx].status.toUpperCase() == 'PLACED') {
+      original = _orders[idx];
+      final cancelled = OrderModel(
+        id: original.id,
+        deviceId: original.deviceId,
+        userId: original.userId,
+        customerName: original.customerName,
+        customerPhone: original.customerPhone,
+        deliveryAddress: original.deliveryAddress,
+        items: original.items,
+        subtotal: original.subtotal,
+        deliveryFee: original.deliveryFee,
+        total: original.total,
+        status: 'CANCELLED',
+        notes: original.notes,
+        createdAt: original.createdAt,
+      );
+      _orders[idx] = cancelled;
+      if (_activeTrackingOrder?.id == orderId) {
+        _activeTrackingOrder = cancelled;
+      }
+      // Update local cache
+      await StorageService.saveLocalOrder(cancelled);
+      notifyListeners();
+    } else {
+      return false; // Not PLACED or not found
+    }
+
+    // Sync to Supabase
+    final success = await SupabaseService.cancelOrder(orderId);
+    if (!success) {
+      // Roll back on failure
+      _orders[idx] = original;
+      if (_activeTrackingOrder?.id == orderId) {
+        _activeTrackingOrder = original;
+      }
+      notifyListeners();
+    }
+    return success;
   }
 
   @override

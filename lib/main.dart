@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/app_theme.dart';
@@ -8,6 +9,7 @@ import 'providers/catalog_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/store_provider.dart';
 import 'providers/wishlist_provider.dart';
+import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 import 'services/supabase_service.dart';
 import 'widgets/auth_gate.dart';
@@ -21,6 +23,12 @@ void main() async {
 
   try {
     await Firebase.initializeApp();
+
+    // Register the background message handler BEFORE any other FCM calls
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    // Initialize notification channel and foreground listeners
+    await NotificationService.init();
   } catch (e) {
     debugPrint('Firebase initialization: $e');
   }

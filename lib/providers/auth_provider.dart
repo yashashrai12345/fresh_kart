@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 /// Lightweight representation of the authenticated customer.
@@ -104,6 +105,8 @@ class AuthProvider extends ChangeNotifier {
             phoneNumber: user.phoneNumber,
           );
           _syncUserMetadata(_currentUser);
+          // Register FCM token whenever auth state is restored
+          NotificationService.registerToken(user.uid);
         } else {
           _currentUser = null;
         }
@@ -156,6 +159,8 @@ class AuthProvider extends ChangeNotifier {
           phoneNumber: firebaseUser.phoneNumber,
         );
         _syncUserMetadata(_currentUser);
+        // Register FCM token for push notifications
+        await NotificationService.registerToken(firebaseUser.uid);
         _isGoogleLoading = false;
         _setLoading(false);
         notifyListeners();

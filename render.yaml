@@ -10,6 +10,8 @@ services:
         sync: false          # Set this manually in the Render dashboard
       - key: VITE_SUPABASE_ANON_KEY
         sync: false          # Set this manually in the Render dashboard
+      - key: VITE_FIREBASE_VAPID_KEY
+        value: BMfwxEJZsQyQ3tAYene3NboufNpOISbrcejF1LeE_bjgPlGmd0pdopb2zRSAC9zG7Y1-A8avcZXbemmtwnC_w6U
     headers:
       - path: /*
         name: Cache-Control

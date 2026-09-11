@@ -49,6 +49,24 @@ class SupabaseService {
 
   static String? get currentUserId => _client?.auth.currentUser?.id;
 
+  /// Save or refresh the FCM device token for a Firebase-authenticated user.
+  /// Called once at startup (after login) and whenever the token refreshes.
+  static Future<void> saveFcmToken(String userId, String token,
+      {String platform = 'android'}) async {
+    if (_initialized && _client != null) {
+      try {
+        await _client!.from('user_fcm_tokens').upsert({
+          'user_id': userId,
+          'token': token,
+          'platform': platform,
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'token');
+      } catch (e) {
+        debugPrint('Error saving FCM token: $e');
+      }
+    }
+  }
+
   // ── CATALOG DATA (Categories & Products) ─────────────────────────────────
 
   static Future<List<CategoryModel>> getCategories() async {
@@ -200,6 +218,24 @@ class SupabaseService {
           .map((list) => list.map((o) => OrderModel.fromJson(o)).toList());
     }
     return null;
+  }
+
+  /// Cancel a PLACED order — sets status to CANCELLED in Supabase.
+  /// Returns true on success, false on failure or if not connected.
+  static Future<bool> cancelOrder(String orderId) async {
+    if (_initialized && _client != null) {
+      try {
+        await _client!
+            .from('orders')
+            .update({'status': 'CANCELLED'})
+            .eq('id', orderId)
+            .eq('status', 'PLACED'); // Only cancel if still PLACED
+        return true;
+      } catch (e) {
+        debugPrint('Error cancelling order in Supabase: $e');
+      }
+    }
+    return false;
   }
 
   // Legacy: Realtime for device-based orders (backward compat)

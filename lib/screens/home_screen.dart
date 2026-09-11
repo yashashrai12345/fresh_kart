@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final userId = context.read<AuthProvider>().currentUser?.id;
       context.read<StoreProvider>().loadSettings();
       context.read<CatalogProvider>().loadCatalog();
-      context.read<OrderProvider>().loadOrders();
+      context.read<OrderProvider>().loadOrders(userId: userId);
       context.read<WishlistProvider>().init(userId: userId);
     });
   }

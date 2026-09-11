@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -358,16 +359,22 @@ class _CartScreenState extends State<CartScreen> {
                         // Phone Number
                         TextFormField(
                           controller: _phoneController,
-                          keyboardType: TextInputType.phone,
+                          keyboardType: TextInputType.number,
+                          maxLength: 10,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                           decoration: const InputDecoration(
-                            labelText: 'Phone Number (10 digits) *',
+                            labelText: 'Phone Number *',
                             prefixIcon: Icon(Icons.phone_outlined, size: 18),
                             prefixText: '+91 ',
+                            counterText: '', // hide the "0/10" counter
                           ),
                           validator: (value) {
                             final clean =
                                 (value ?? '').replaceAll(RegExp(r'\D'), '');
-                            if (clean.length < 10) {
+                            if (clean.length != 10) {
                               return 'Please enter a valid 10-digit phone number';
                             }
                             return null;

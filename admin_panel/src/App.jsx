@@ -11,7 +11,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { storeService, isSupabaseConfigured, supabase } from './services/storeService';
+import { storeService, isSupabaseConfigured, supabase, initAdminPushNotifications } from './services/storeService';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
@@ -56,6 +56,8 @@ export default function App() {
       const user = await storeService.restoreSession();
       if (user) {
         setCurrentUser(user);
+        // Re-register for push notifications on session restore
+        initAdminPushNotifications().catch(console.warn);
       }
       await loadStoreData();
     };
@@ -100,6 +102,13 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  // Called by Login page after successful authentication
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    // Register admin browser for FCM push notifications
+    initAdminPushNotifications().catch(console.warn);
+  };
+
   // Mutators
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     const updated = await storeService.updateOrderStatus(orderId, newStatus);
@@ -138,7 +147,7 @@ export default function App() {
 
   // If not logged in, render Login
   if (!currentUser) {
-    return <Login onLoginSuccess={setCurrentUser} />;
+    return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
   if (loading || !settings) {

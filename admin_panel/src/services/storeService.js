@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { initializeApp, getApps } from 'firebase/app';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { INITIAL_SETTINGS, INITIAL_CATEGORIES, INITIAL_PRODUCTS, INITIAL_ORDERS } from '../data/initialData';
 
 const rawUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -12,6 +14,26 @@ export const isSupabaseConfigured = Boolean(
 export const supabase = isSupabaseConfigured
   ? createClient(cleanUrl, supabaseAnonKey)
   : null;
+
+// ── Firebase Web Config ────────────────────────────────────────────────────
+// Values come from google-services.json / Firebase Console → Project Settings.
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAitpvecCjQB-7atmYY3WkVpixqCT-mh9g',
+  authDomain: 'weighty-forest-411105.firebaseapp.com',
+  projectId: 'weighty-forest-411105',
+  storageBucket: 'weighty-forest-411105.firebasestorage.app',
+  messagingSenderId: '716511278689',
+  appId: '1:716511278689:android:293c2557f7e8a335871c20',
+};
+
+// VAPID key from Firebase Console → Project Settings → Cloud Messaging
+// → Web Push certificates → Key pair  (paste yours into .env)
+const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || '';
+
+function getFirebaseMessaging() {
+  const app = getApps().length ? getApps()[0] : initializeApp(FIREBASE_CONFIG);
+  return getMessaging(app);
+}
 
 // LocalStorage helpers for offline/standalone mode (catalog data only - NOT auth)
 const STORAGE_KEYS = {
@@ -45,6 +67,81 @@ function setLocalData(key, data) {
     localStorage.setItem(key, JSON.stringify(data));
   } catch (e) {
     console.error('LocalStorage error:', e);
+  }
+}
+
+// ── Admin Push Notifications ───────────────────────────────────────────────
+
+/**
+ * Call this after the admin logs in.
+ * Requests browser notification permission, registers for FCM Web Push,
+ * and saves the token to Supabase so the Edge Function can find it.
+ */
+export async function initAdminPushNotifications() {
+  try {
+    if (!('Notification' in window)) {
+      console.warn('[FCM Admin] Browser does not support notifications.');
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.warn('[FCM Admin] Notification permission denied.');
+      return;
+    }
+
+    if (!VAPID_KEY) {
+      console.warn(
+        '[FCM Admin] VITE_FIREBASE_VAPID_KEY is not set in .env. ' +
+        'Get it from Firebase Console → Project Settings → Cloud Messaging → Web Push certificates.'
+      );
+      return;
+    }
+
+    const messaging = getFirebaseMessaging();
+
+    // Register the service worker first
+    const registration = await navigator.serviceWorker.register(
+      '/firebase-messaging-sw.js',
+      { scope: '/' }
+    );
+    await navigator.serviceWorker.ready;
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration,
+    });
+
+    if (token) {
+      console.log('[FCM Admin] Browser push token obtained.');
+      // Save to Supabase under a fixed user_id so the Edge Function can find it
+      if (isSupabaseConfigured && supabase) {
+        await supabase.from('user_fcm_tokens').upsert(
+          {
+            user_id: 'admin',
+            token,
+            platform: 'web',
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'token' }
+        );
+      }
+    }
+
+    // Handle foreground messages (admin tab is open and in focus)
+    onMessage(messaging, (payload) => {
+      console.log('[FCM Admin] Foreground message:', payload);
+      const { title, body } = payload.notification || {};
+      if (title && Notification.permission === 'granted') {
+        new Notification(title, {
+          body,
+          icon: '/logo/fresh_kart_icon.jpg',
+          tag: payload.data?.order_id || 'freshkart-admin',
+        });
+      }
+    });
+  } catch (e) {
+    console.warn('[FCM Admin] Push notification setup failed:', e);
   }
 }
 
