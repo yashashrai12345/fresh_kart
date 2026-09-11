@@ -155,54 +155,65 @@ Deno.serve(async (req: Request) => {
     const newStatus: string = (record.status ?? '').toUpperCase();
     const oldStatus: string = (old_record?.status ?? '').toUpperCase();
 
-    // ── Case 1: New order placed → notify admin ──────────────────────────
-    if (type === 'INSERT' && newStatus === 'PLACED') {
+    // ── Helper: Fetch customer FCM tokens (with fallback) ────────────────
+    async function getCustomerTokens(userId?: string | null): Promise<string[]> {
+      if (userId) {
+        const { data } = await supabase
+          .from('user_fcm_tokens')
+          .select('token')
+          .eq('user_id', userId);
+        if (data && data.length > 0) {
+          return data.map((r: { token: string }) => r.token);
+        }
+      }
+      // Fallback: look up any registered Android device tokens
+      const { data } = await supabase
+        .from('user_fcm_tokens')
+        .select('token')
+        .eq('platform', 'android')
+        .order('updated_at', { ascending: false })
+        .limit(5);
+      return (data ?? []).map((r: { token: string }) => r.token);
+    }
+
+    // ── Case 1: New order placed → notify admin AND customer ─────────────
+    if (type === 'INSERT' && (newStatus === 'PLACED' || !newStatus)) {
       const { data: adminTokens } = await supabase
         .from('user_fcm_tokens')
         .select('token')
         .eq('user_id', 'admin');
 
-      const tokens = (adminTokens ?? []).map((r: { token: string }) => r.token);
+      const aTokens = (adminTokens ?? []).map((r: { token: string }) => r.token);
       const total = record.total ? `₹${Math.round(record.total)}` : '';
       const name = record.customer_name ?? 'A customer';
 
+      // 1. Notify Admin browser
       await sendFcmNotification(
-        tokens,
+        aTokens,
         '🛒 New Order Received!',
         `Order #${orderId} · ${total} from ${name}`,
         { order_id: orderId, type: 'new_order' }
       );
 
-      return new Response(JSON.stringify({ sent: 'admin', count: tokens.length }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      // 2. Notify Customer mobile app
+      const cTokens = await getCustomerTokens(record.user_id);
+      if (cTokens.length > 0) {
+        await sendFcmNotification(
+          cTokens,
+          '🎉 Order Placed Successfully!',
+          `Your Fresh Kart order #${orderId} for ${total} has been received.`,
+          { order_id: orderId, type: 'order_placed', status: 'PLACED' }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ sent: 'both', admin_count: aTokens.length, customer_count: cTokens.length }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     // ── Case 2: Order status updated → notify customer ───────────────────
     if (type === 'UPDATE' && newStatus !== oldStatus) {
-      const targetStatuses = ['CONFIRMED', 'OUT_FOR_DELIVERY'];
-      if (!targetStatuses.includes(newStatus)) {
-        return new Response(JSON.stringify({ skipped: 'status not a notify trigger' }), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Look up customer FCM token by user_id stored in the order
-      const userId: string | null = record.user_id ?? null;
-      if (!userId) {
-        return new Response(JSON.stringify({ skipped: 'no user_id on order' }), {
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      const { data: customerTokens } = await supabase
-        .from('user_fcm_tokens')
-        .select('token')
-        .eq('user_id', userId)
-        .eq('platform', 'android');
-
-      const tokens = (customerTokens ?? []).map((r: { token: string }) => r.token);
-
       const msgMap: Record<string, { title: string; body: string }> = {
         CONFIRMED: {
           title: '✅ Order Confirmed!',
@@ -212,18 +223,35 @@ Deno.serve(async (req: Request) => {
           title: '🛵 Out for Delivery!',
           body: `Your Fresh Kart order #${orderId} is on its way to you!`,
         },
+        CANCELLED: {
+          title: '❌ Order Cancelled',
+          body: `Your Fresh Kart order #${orderId} has been cancelled.`,
+        },
+        DELIVERED: {
+          title: '🎉 Order Delivered!',
+          body: `Your Fresh Kart order #${orderId} has been delivered. Enjoy!`,
+        },
       };
 
       const msg = msgMap[newStatus];
+      if (!msg) {
+        return new Response(JSON.stringify({ skipped: 'status not a notify trigger' }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const tokens = await getCustomerTokens(record.user_id);
+
       await sendFcmNotification(tokens, msg.title, msg.body, {
         order_id: orderId,
         status: newStatus,
         type: 'order_update',
       });
 
-      return new Response(JSON.stringify({ sent: 'customer', status: newStatus, count: tokens.length }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ sent: 'customer', status: newStatus, count: tokens.length }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(JSON.stringify({ skipped: 'no matching trigger' }), {

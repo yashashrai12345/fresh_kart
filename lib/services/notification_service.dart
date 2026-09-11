@@ -39,12 +39,13 @@ class NotificationService {
       sound: true,
     );
 
-    // 2. Create the Android notification channel
+    // 2. Create the Android notification channel and request Android 13+ permission
     if (Platform.isAndroid) {
-      await _localNotifications
+      final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(_channel);
+              AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.createNotificationChannel(_channel);
+      await androidPlugin?.requestNotificationsPermission();
     }
 
     // 3. Initialize flutter_local_notifications (for foreground display)

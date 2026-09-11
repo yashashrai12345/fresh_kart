@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_constants.dart';
@@ -47,7 +48,9 @@ class SupabaseService {
 
   // ── Convenience getter for the current authenticated user ────────────────
 
-  static String? get currentUserId => _client?.auth.currentUser?.id;
+  static String? get currentUserId =>
+      fb.FirebaseAuth.instance.currentUser?.uid ??
+      _client?.auth.currentUser?.id;
 
   /// Save or refresh the FCM device token for a Firebase-authenticated user.
   /// Called once at startup (after login) and whenever the token refreshes.
