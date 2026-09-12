@@ -251,7 +251,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year} at ${order.createdAt.hour.toString().padLeft(2, '0')}:${order.createdAt.minute.toString().padLeft(2, '0')}',
+                                order.formattedCreatedAt,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: AppTheme.textMuted,

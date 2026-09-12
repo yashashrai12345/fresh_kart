@@ -92,6 +92,41 @@ class OrderModel {
     }
   }
 
+  /// Indian Standard Time (UTC+05:30: Chennai, Kolkata, Mumbai, New Delhi)
+  DateTime get istCreatedAt {
+    final utc = createdAt.toUtc();
+    return utc.add(const Duration(hours: 5, minutes: 30));
+  }
+
+  /// Formatted date and time in IST (e.g. "12 Sep 2026, 08:48 AM")
+  String get formattedCreatedAt {
+    final ist = istCreatedAt;
+    final day = ist.day.toString().padLeft(2, '0');
+    const monthNames = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final month = monthNames[ist.month];
+    final year = ist.year;
+    final hourInt = ist.hour;
+    final minute = ist.minute.toString().padLeft(2, '0');
+    final period = hourInt >= 12 ? 'PM' : 'AM';
+    final hour12 = hourInt == 0 ? 12 : (hourInt > 12 ? hourInt - 12 : hourInt);
+    final hourStr = hour12.toString().padLeft(2, '0');
+    return '$day $month $year, $hourStr:$minute $period';
+  }
+
+  /// Time only formatted in IST (e.g. "08:48 AM")
+  String get formattedCreatedAtTime {
+    final ist = istCreatedAt;
+    final hourInt = ist.hour;
+    final minute = ist.minute.toString().padLeft(2, '0');
+    final period = hourInt >= 12 ? 'PM' : 'AM';
+    final hour12 = hourInt == 0 ? 12 : (hourInt > 12 ? hourInt - 12 : hourInt);
+    final hourStr = hour12.toString().padLeft(2, '0');
+    return '$hourStr:$minute $period';
+  }
+
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     var rawItems = json['items'];
     List<OrderItemSummary> parsedItems = [];

@@ -10,6 +10,7 @@ import {
   Package,
   Truck
 } from 'lucide-react';
+import { formatDateTimeIST } from '../utils/dateUtils';
 
 export default function Dashboard({
   orders,
@@ -183,7 +184,7 @@ export default function Dashboard({
                   <td>
                     <div style={{ fontWeight: 700, color: '#059669' }}>{order.id}</div>
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatDateTimeIST(order.created_at)}
                     </div>
                   </td>
                   <td>

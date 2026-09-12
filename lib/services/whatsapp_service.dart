@@ -11,6 +11,7 @@ class WhatsAppService {
   }) {
     final buffer = StringBuffer();
     buffer.writeln('🛒 *FRESH KART ORDER* (#${order.id})');
+    buffer.writeln('🕒 *Time:* ${order.formattedCreatedAt}');
     buffer.writeln('-----------------------------');
 
     for (final item in order.items) {

@@ -12,6 +12,7 @@ import {
   Truck,
   X
 } from 'lucide-react';
+import { formatDateTimeIST } from '../utils/dateUtils';
 
 export default function Orders({ orders, onUpdateOrderStatus }) {
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -148,7 +149,7 @@ export default function Orders({ orders, onUpdateOrderStatus }) {
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                       <Clock size={12} />
-                      {new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatDateTimeIST(order.created_at)}
                     </div>
                   </td>
                   <td>
@@ -228,7 +229,7 @@ export default function Orders({ orders, onUpdateOrderStatus }) {
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Order Details: {activeModalOrder.id}</h3>
                 <p style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                  Placed on {new Date(activeModalOrder.created_at).toLocaleString()}
+                  Placed on {formatDateTimeIST(activeModalOrder.created_at)} (IST)
                 </p>
               </div>
               <button
