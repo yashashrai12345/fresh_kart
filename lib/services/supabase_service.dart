@@ -125,6 +125,18 @@ class SupabaseService {
     return const StoreSettingsModel();
   }
 
+  /// Realtime stream for store settings (maintenance mode updates immediately without app reload)
+  static Stream<StoreSettingsModel>? subscribeToStoreSettings() {
+    if (_initialized && _client != null) {
+      return _client!
+          .from('store_settings')
+          .stream(primaryKey: ['id'])
+          .where((list) => list.isNotEmpty)
+          .map((list) => StoreSettingsModel.fromJson(list.first));
+    }
+    return null;
+  }
+
   // ── ORDERS ────────────────────────────────────────────────────────────────
 
   static Future<void> createOrder(OrderModel order) async {
