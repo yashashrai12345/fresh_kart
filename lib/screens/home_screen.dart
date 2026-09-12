@@ -8,6 +8,7 @@ import '../providers/store_provider.dart';
 import '../providers/wishlist_provider.dart';
 import '../widgets/category_chips_bar.dart';
 import '../widgets/floating_cart_bar.dart';
+import '../widgets/minimal_ad_banner.dart';
 import '../widgets/product_card.dart';
 import 'cart_screen.dart';
 import 'orders_screen.dart';
@@ -506,6 +507,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       selectedCategoryId: catalog.selectedCategoryId,
                       onSelectCategory: (catId) => catalog.selectCategory(catId),
                     ),
+                  ),
+
+                  // Minimal Sponsored Banner (Collapses automatically if no ad fill)
+                  const SliverToBoxAdapter(
+                    child: MinimalAdBanner(),
                   ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 14)),

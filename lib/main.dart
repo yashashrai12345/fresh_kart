@@ -9,6 +9,7 @@ import 'providers/catalog_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/store_provider.dart';
 import 'providers/wishlist_provider.dart';
+import 'services/ad_service.dart';
 import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 import 'services/supabase_service.dart';
@@ -17,9 +18,10 @@ import 'widgets/auth_gate.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize storage, Supabase, and Firebase
+  // Initialize storage, Supabase, Firebase, and AdMob
   await StorageService.init();
   await SupabaseService.init();
+  await AdService.init();
 
   try {
     await Firebase.initializeApp();

@@ -5,6 +5,7 @@ import '../models/order_model.dart';
 import '../providers/order_provider.dart';
 import '../providers/store_provider.dart';
 import '../services/whatsapp_service.dart';
+import '../widgets/minimal_ad_banner.dart';
 
 class OrderTrackingScreen extends StatelessWidget {
   final OrderModel order;
@@ -622,6 +623,11 @@ class OrderTrackingScreen extends StatelessWidget {
               ),
             ),
           ],
+
+          // Minimal Sponsored Banner while tracking order
+          const SizedBox(height: 20),
+          const MinimalAdBanner(margin: EdgeInsets.zero),
+          const SizedBox(height: 16),
         ],
       ),
     );
