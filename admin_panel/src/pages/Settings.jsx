@@ -28,6 +28,28 @@ export default function Settings({ settings, onUpdateSettings }) {
     });
   };
 
+  const getLocalNumber = (fullNumber) => {
+    if (!fullNumber) return '';
+    const digits = String(fullNumber).replace(/\D/g, '');
+    if (digits.startsWith('91') && digits.length > 10) {
+      return digits.slice(2);
+    }
+    return digits;
+  };
+
+  const handleWhatsAppChange = (rawInput) => {
+    const digits = rawInput.replace(/\D/g, '');
+    let localDigits = digits;
+    if (localDigits.startsWith('91') && localDigits.length > 10) {
+      localDigits = localDigits.slice(2);
+    }
+    localDigits = localDigits.slice(0, 10);
+    setFormData({
+      ...formData,
+      whatsapp_number: localDigits ? `91${localDigits}` : ''
+    });
+  };
+
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   return (
@@ -130,23 +152,62 @@ export default function Settings({ settings, onUpdateSettings }) {
               </h3>
 
               <div className="form-group">
-                <label className="form-label">
-                  WhatsApp Order Handoff Number * (Without + symbol, with country code)
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span>WhatsApp Order Handoff Number *</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '4px' }}>
+                    Default: +91 (India)
+                  </span>
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <MessageCircle size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#16a34a' }} />
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  background: 'white',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '0 14px',
+                    backgroundColor: '#f0fdf4',
+                    borderRight: '1px solid #bbf7d0',
+                    color: '#15803d',
+                    fontWeight: 700,
+                    fontSize: '0.95rem',
+                    userSelect: 'none',
+                    flexShrink: 0
+                  }}>
+                    <MessageCircle size={18} color="#16a34a" />
+                    <span>+91</span>
+                  </div>
                   <input
-                    type="text"
+                    type="tel"
                     required
                     className="form-input"
-                    style={{ paddingLeft: '38px', fontWeight: 600 }}
-                    value={formData.whatsapp_number || ''}
-                    onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
-                    placeholder="918970050327"
+                    style={{
+                      border: 'none',
+                      borderRadius: 0,
+                      fontWeight: 600,
+                      fontSize: '0.98rem',
+                      letterSpacing: '0.5px',
+                      padding: '10px 14px',
+                      width: '100%',
+                      outline: 'none',
+                      boxShadow: 'none'
+                    }}
+                    value={getLocalNumber(formData.whatsapp_number)}
+                    onChange={(e) => handleWhatsAppChange(e.target.value)}
+                    placeholder="89700 50327"
                   />
                 </div>
                 <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '6px' }}>
-                  The Flutter mobile app will send formatted itemized order messages directly to this WhatsApp number.
+                  The Flutter mobile app will send formatted itemized order messages directly to{' '}
+                  <strong style={{ color: '#059669' }}>
+                    +91 {getLocalNumber(formData.whatsapp_number) || '89700 50327'}
+                  </strong>.
                 </p>
               </div>
 

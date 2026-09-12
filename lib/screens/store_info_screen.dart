@@ -117,7 +117,11 @@ class StoreInfoScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '+${s.whatsappNumber}',
+                        s.whatsappNumber.startsWith('+91')
+                            ? s.whatsappNumber
+                            : (s.whatsappNumber.startsWith('91')
+                                ? '+${s.whatsappNumber}'
+                                : '+91 ${s.whatsappNumber}'),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF15803D),
