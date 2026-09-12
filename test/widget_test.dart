@@ -126,7 +126,7 @@ void main() {
         settings: settings,
       );
 
-      expect(message.contains('*FRESH KART ORDER* (#FK-9999)'), isTrue);
+      expect(message.contains('*GREEN BASKET ORDER* (#FK-9999)'), isTrue);
       expect(message.contains('Farm Fresh Tomatoes x 2 (1 kg) - ₹64'), isTrue);
       expect(message.contains('Fresh Spinach x 1 (1 bunch) - ₹24'), isTrue);
       expect(message.contains('Items Total: ₹88'), isTrue);

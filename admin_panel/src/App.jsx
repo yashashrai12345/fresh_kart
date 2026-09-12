@@ -163,7 +163,7 @@ export default function App() {
         fontSize: '1.2rem',
         fontWeight: 700
       }}>
-        Loading Fresh Kart Store Operations...
+        Loading Green Basket Store Operations...
       </div>
     );
   }
@@ -186,7 +186,7 @@ export default function App() {
           }}>
             <img
               src="/logo/fresh_kart_icon.jpg"
-              alt="Fresh Kart"
+              alt="Green Basket"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => {
                 e.target.style.display = 'none';
@@ -198,7 +198,7 @@ export default function App() {
             />
           </div>
           <div>
-            <div className="brand-title">FRESH KART</div>
+            <div className="brand-title">GREEN BASKET</div>
             <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Admin Portal</div>
           </div>
           <span className="brand-badge">APMC v1.0</span>

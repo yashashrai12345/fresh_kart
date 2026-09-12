@@ -1,4 +1,4 @@
-// Firebase Cloud Messaging Service Worker for Fresh Kart Admin Panel
+// Firebase Cloud Messaging Service Worker for Green Basket Admin Panel
 // This file MUST be at the root of the served web app (public/).
 // It handles background push notifications in the browser.
 
@@ -23,7 +23,7 @@ messaging.onBackgroundMessage((payload) => {
   console.log('[FCM SW] Background message received:', payload);
 
   const notification = payload.notification || {};
-  const title = notification.title || '🛒 Fresh Kart';
+  const title = notification.title || '🛒 Green Basket';
   const body = notification.body || 'You have a new notification.';
 
   self.registration.showNotification(title, {

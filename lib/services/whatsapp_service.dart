@@ -10,7 +10,7 @@ class WhatsAppService {
     required StoreSettingsModel settings,
   }) {
     final buffer = StringBuffer();
-    buffer.writeln('🛒 *FRESH KART ORDER* (#${order.id})');
+    buffer.writeln('🛒 *GREEN BASKET ORDER* (#${order.id})');
     buffer.writeln('🕒 *Time:* ${order.formattedCreatedAt}');
     buffer.writeln('-----------------------------');
 

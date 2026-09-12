@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             icon: const Icon(Icons.info_outline_rounded,
                                 size: 22),
-                            tooltip: 'About Fresh Kart',
+                            tooltip: 'About Green Basket',
                           ),
                         ],
                       ),

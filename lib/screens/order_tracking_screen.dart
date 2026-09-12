@@ -122,7 +122,7 @@ class OrderTrackingScreen extends StatelessWidget {
                 WhatsAppService.launchWhatsAppChat(
                   phoneNumber: store.settings.whatsappNumber,
                   prefilledMessage:
-                      'Hi Fresh Kart! I am checking on my order #${currentOrder.id}.',
+                      'Hi Green Basket! I am checking on my order #${currentOrder.id}.',
                 );
               },
               icon: const Icon(Icons.support_agent_rounded,

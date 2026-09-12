@@ -8,7 +8,7 @@ insert into public.store_settings (
     about_text, guarantee_text
 ) values (
     '00000000-0000-0000-0000-000000000001',
-    'FRESH KART',
+    'GREEN BASKET',
     'APMC-Direct Fresh Produce',
     'Farm Fresh Vegetables & Fruits at Mandi Wholesale Rates',
     'APMC Yard Gate #3, Yeshwanthpur, Bengaluru, Karnataka 560022',
@@ -24,7 +24,7 @@ insert into public.store_settings (
     }'::jsonb,
     250.00,
     30.00,
-    'Fresh Kart sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
+    'Green Basket sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
     '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.'
 ) on conflict (id) do nothing;
 

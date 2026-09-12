@@ -16,7 +16,7 @@ class AppConstants {
       !supabaseUrl.contains('placeholder');
 
   // Fallback Store Defaults (mirrors PRD and APMC Mandi operations)
-  static const String defaultStoreName = 'FRESH KART';
+  static const String defaultStoreName = 'GREEN BASKET';
   static const String defaultTagline = 'APMC-Direct Fresh Produce';
   static const String defaultSubtitle = 'Farm Fresh Vegetables & Fruits at Mandi Rates';
   static const String defaultAddress =

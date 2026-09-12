@@ -7,7 +7,7 @@ create extension if not exists "uuid-ossp";
 -- 1. Store Settings Singleton Table
 create table if not exists public.store_settings (
     id uuid primary key default uuid_generate_v4(),
-    name text not null default 'FRESH KART',
+    name text not null default 'GREEN BASKET',
     tagline text not null default 'APMC-Direct Fresh Produce',
     subtitle text default 'Farm Fresh Vegetables & Fruits at Mandi Wholesale Prices',
     address text not null default 'APMC Yard Gate #3, Yeshwanthpur, Bengaluru, Karnataka 560022',
@@ -23,7 +23,7 @@ create table if not exists public.store_settings (
     }'::jsonb,
     free_delivery_threshold numeric(10,2) not null default 250.00,
     delivery_fee numeric(10,2) not null default 30.00,
-    about_text text default 'Fresh Kart sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
+    about_text text default 'Green Basket sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
     guarantee_text text default '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.',
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()

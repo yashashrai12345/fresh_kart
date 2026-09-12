@@ -166,7 +166,7 @@ export const storeService = {
     return {
       id: data.user.id,
       email: data.user.email,
-      name: data.user.user_metadata?.name || 'Fresh Kart Admin',
+      name: data.user.user_metadata?.name || 'Green Basket Admin',
     };
   },
 
@@ -179,7 +179,7 @@ export const storeService = {
       return {
         id: session.user.id,
         email: session.user.email,
-        name: session.user.user_metadata?.name || 'Fresh Kart Admin',
+        name: session.user.user_metadata?.name || 'Green Basket Admin',
       };
     } catch (e) {
       console.warn('Session restore error:', e);

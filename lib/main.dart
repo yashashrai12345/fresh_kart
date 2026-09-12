@@ -33,11 +33,11 @@ void main() async {
     debugPrint('Firebase initialization: $e');
   }
 
-  runApp(const FreshKartApp());
+  runApp(const GreenBasketApp());
 }
 
-class FreshKartApp extends StatelessWidget {
-  const FreshKartApp({super.key});
+class GreenBasketApp extends StatelessWidget {
+  const GreenBasketApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +52,7 @@ class FreshKartApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
       ],
       child: MaterialApp(
-        title: 'Fresh Kart',
+        title: 'Green Basket',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         home: const AuthGate(),

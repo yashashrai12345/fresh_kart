@@ -16,7 +16,7 @@ class StoreInfoScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About Fresh Kart'),
+        title: const Text('About Green Basket'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
@@ -131,7 +131,7 @@ class StoreInfoScreen extends StatelessWidget {
                     WhatsAppService.launchWhatsAppChat(
                       phoneNumber: s.whatsappNumber,
                       prefilledMessage:
-                          'Hello Fresh Kart! I have a question about my produce delivery.',
+                          'Hello Green Basket! I have a question about my produce delivery.',
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -304,7 +304,7 @@ class StoreInfoScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'The Fresh Kart Promise',
+                  'The Green Basket Promise',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,

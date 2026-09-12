@@ -405,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 16),
         const Text(
-          'FRESH KART',
+          'GREEN BASKET',
           style: TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w900,

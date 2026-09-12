@@ -32,7 +32,7 @@ class StoreSettingsModel {
     this.freeDeliveryThreshold = AppConstants.defaultFreeDeliveryThreshold,
     this.deliveryFee = AppConstants.defaultDeliveryFee,
     this.aboutText =
-        'Fresh Kart sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
+        'Green Basket sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
     this.guaranteeText =
         '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.',
   });

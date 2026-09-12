@@ -1,11 +1,11 @@
 {
-    "name": "fresh_kart",
-    "short_name": "fresh_kart",
+    "name": "Green Basket",
+    "short_name": "Green Basket",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Green Basket — APMC-Direct Fresh Vegetables & Fruits Delivery",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

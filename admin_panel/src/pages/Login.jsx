@@ -55,7 +55,7 @@ export default function Login({ onLoginSuccess }) {
           }}>
             <img
               src="/logo/fresh_kart_icon.jpg"
-              alt="Fresh Kart Logo"
+              alt="Green Basket Logo"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               onError={(e) => {
                 e.target.style.display = 'none';
@@ -65,7 +65,7 @@ export default function Login({ onLoginSuccess }) {
             />
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: '0 0 4px' }}>
-            FRESH KART
+            GREEN BASKET
           </h1>
           <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '0 0 12px' }}>
             Admin Operations Console
@@ -133,7 +133,7 @@ export default function Login({ onLoginSuccess }) {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="owner@freshkart.com"
+              placeholder="owner@greenbasket.com"
               disabled={!isSupabaseConfigured}
               autoComplete="username"
             />

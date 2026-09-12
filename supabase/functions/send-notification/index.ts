@@ -1,4 +1,4 @@
-// Fresh Kart — Supabase Edge Function: send-notification
+// Green Basket — Supabase Edge Function: send-notification
 // Triggered by Supabase Database Webhooks on INSERT and UPDATE of the orders table.
 //
 // Webhook payload shape:
@@ -201,7 +201,7 @@ Deno.serve(async (req: Request) => {
         await sendFcmNotification(
           cTokens,
           '🎉 Order Placed Successfully!',
-          `Your Fresh Kart order #${orderId} for ${total} has been received.`,
+          `Your Green Basket order #${orderId} for ${total} has been received.`,
           { order_id: orderId, type: 'order_placed', status: 'PLACED' }
         );
       }
@@ -217,19 +217,19 @@ Deno.serve(async (req: Request) => {
       const msgMap: Record<string, { title: string; body: string }> = {
         CONFIRMED: {
           title: '✅ Order Confirmed!',
-          body: `Your Fresh Kart order #${orderId} is confirmed and being prepared!`,
+          body: `Your Green Basket order #${orderId} is confirmed and being prepared!`,
         },
         OUT_FOR_DELIVERY: {
           title: '🛵 Out for Delivery!',
-          body: `Your Fresh Kart order #${orderId} is on its way to you!`,
+          body: `Your Green Basket order #${orderId} is on its way to you!`,
         },
         CANCELLED: {
           title: '❌ Order Cancelled',
-          body: `Your Fresh Kart order #${orderId} has been cancelled.`,
+          body: `Your Green Basket order #${orderId} has been cancelled.`,
         },
         DELIVERED: {
           title: '🎉 Order Delivered!',
-          body: `Your Fresh Kart order #${orderId} has been delivered. Enjoy!`,
+          body: `Your Green Basket order #${orderId} has been delivered. Enjoy!`,
         },
       };
 
