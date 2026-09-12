@@ -88,6 +88,19 @@ class _CartScreenState extends State<CartScreen> {
     final store = context.read<StoreProvider>();
     final orderProv = context.read<OrderProvider>();
 
+    if (store.settings.isMaintenanceMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(store.settings.maintenanceMessage.isNotEmpty
+              ? store.settings.maintenanceMessage
+              : 'Store ordering is currently paused for maintenance.'),
+          backgroundColor: Colors.amber.shade900,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (cart.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your cart is empty.')),
@@ -546,30 +559,92 @@ class _CartScreenState extends State<CartScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.verified_user_rounded,
-                          size: 14, color: AppTheme.primary),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Cash on Delivery / UPI upon inspection at doorstep',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textMuted,
-                        ),
+                  if (store.settings.isMaintenanceMode) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.construction_rounded,
+                              color: Color(0xFFD97706), size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  store.settings.maintenanceTitle.isNotEmpty
+                                      ? store.settings.maintenanceTitle
+                                      : 'Store Under Maintenance',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF92400E),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  store.settings.maintenanceMessage.isNotEmpty
+                                      ? store.settings.maintenanceMessage
+                                      : 'Ordering is temporarily paused.',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                ),
+                                if (store.settings.formattedMaintenanceResume
+                                    .isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Resuming: ${store.settings.formattedMaintenanceResume}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF92400E),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.verified_user_rounded,
+                            size: 14, color: AppTheme.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Cash on Delivery / UPI upon inspection at doorstep',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed:
-                          _isPlacingOrder ? null : _handleWhatsAppCheckout,
+                      onPressed: (_isPlacingOrder || store.settings.isMaintenanceMode)
+                          ? null
+                          : _handleWhatsAppCheckout,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366), // WhatsApp Green
+                        backgroundColor: store.settings.isMaintenanceMode
+                            ? Colors.grey.shade400
+                            : const Color(0xFF25D366), // WhatsApp Green
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
@@ -585,10 +660,17 @@ class _CartScreenState extends State<CartScreen> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.chat_rounded, size: 20),
+                                Icon(
+                                  store.settings.isMaintenanceMode
+                                      ? Icons.block_rounded
+                                      : Icons.chat_rounded,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Order on WhatsApp • ₹${grandTotal.toStringAsFixed(0)}',
+                                  store.settings.isMaintenanceMode
+                                      ? 'Ordering Paused (Maintenance)'
+                                      : 'Order on WhatsApp • ₹${grandTotal.toStringAsFixed(0)}',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,

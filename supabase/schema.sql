@@ -25,6 +25,11 @@ create table if not exists public.store_settings (
     delivery_fee numeric(10,2) not null default 30.00,
     about_text text default 'Green Basket sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
     guarantee_text text default '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.',
+    is_maintenance_mode boolean not null default false,
+    maintenance_title text default 'Store Under Maintenance',
+    maintenance_message text default 'We are currently restocking fresh produce from the APMC Mandi. Ordering will resume shortly!',
+    maintenance_estimated_resume timestamptz,
+    maintenance_allow_browsing boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );

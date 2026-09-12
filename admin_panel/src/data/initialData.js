@@ -17,7 +17,12 @@ export const INITIAL_SETTINGS = {
   free_delivery_threshold: 250,
   delivery_fee: 30,
   about_text: 'Green Basket sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
-  guarantee_text: '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.'
+  guarantee_text: '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.',
+  is_maintenance_mode: false,
+  maintenance_title: 'Store Under Maintenance',
+  maintenance_message: 'We are currently restocking fresh produce from the APMC Mandi. Ordering will resume shortly!',
+  maintenance_estimated_resume: null,
+  maintenance_allow_browsing: true
 };
 
 export const INITIAL_CATEGORIES = [

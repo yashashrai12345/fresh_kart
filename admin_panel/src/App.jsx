@@ -18,6 +18,8 @@ import Products from './pages/Products';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
+import MaintenancePreviewModal from './components/MaintenancePreviewModal';
+import { formatDateTimeIST } from './utils/dateUtils';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,6 +31,7 @@ export default function App() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [previewMaintenanceModalOpen, setPreviewMaintenanceModalOpen] = useState(false);
 
   // Load initial data
   const loadStoreData = async () => {
@@ -89,10 +92,19 @@ export default function App() {
         })
         .subscribe();
 
+      // Settings: maintenance mode and store changes sync in realtime
+      const settingsChannel = supabase
+        .channel('realtime:settings')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, () => {
+          storeService.getSettings().then(setSettings);
+        })
+        .subscribe();
+
       return () => {
         supabase.removeChannel(ordersChannel);
         supabase.removeChannel(productsChannel);
         supabase.removeChannel(categoriesChannel);
+        supabase.removeChannel(settingsChannel);
       };
     }
   }, []);
@@ -249,12 +261,17 @@ export default function App() {
           >
             <SettingsIcon size={18} />
             <span>Store Settings</span>
+            {settings?.is_maintenance_mode && (
+              <span className="badge" style={{ background: '#f59e0b', color: 'white', fontWeight: 800 }}>
+                PAUSED
+              </span>
+            )}
           </button>
         </nav>
 
         <div className="sidebar-footer">
           <div className="user-info">
-            <div className="user-avatar">FK</div>
+            <div className="user-avatar" style={{ background: '#059669' }}>GB</div>
             <div className="user-text">
               <div className="user-name">{currentUser.email?.split('@')[0] || 'Store Owner'}</div>
               <div className="user-role">Administrator</div>
@@ -310,6 +327,103 @@ export default function App() {
           </div>
         </header>
 
+        {/* Global Store Maintenance Alert Banner */}
+        {settings?.is_maintenance_mode && (
+          <div style={{
+            background: 'linear-gradient(90deg, #78350f 0%, #92400e 30%, #b45309 70%, #d97706 100%)',
+            color: 'white',
+            padding: '12px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.86rem',
+            fontWeight: 600,
+            boxShadow: '0 4px 12px rgba(180, 83, 9, 0.3)',
+            flexWrap: 'wrap',
+            gap: '12px',
+            zIndex: 40,
+            borderBottom: '1px solid rgba(255,255,255,0.2)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+              <div>
+                <span style={{ fontWeight: 800 }}>Store Maintenance Mode Active:</span>{' '}
+                <span>{settings.maintenance_title || 'Ordering is currently paused'}</span>
+                {settings.maintenance_estimated_resume && (
+                  <span style={{ opacity: 0.9, marginLeft: '8px', color: '#fef08a' }}>
+                    • Reopening {formatDateTimeIST(settings.maintenance_estimated_resume)}
+                  </span>
+                )}
+                <span style={{
+                  marginLeft: '10px',
+                  background: 'rgba(0,0,0,0.3)',
+                  padding: '3px 8px',
+                  borderRadius: '999px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700
+                }}>
+                  {settings.maintenance_allow_browsing ? 'Browsing Allowed (Checkout Paused)' : 'Full Lockout Screen'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setPreviewMaintenanceModalOpen(true)}
+                style={{
+                  background: 'rgba(255,255,255,0.18)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease'
+                }}
+              >
+                Preview Customer View
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage('settings');
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.18)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Configure Notice
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUpdateSettings({ ...settings, is_maintenance_mode: false })}
+                style={{
+                  background: 'white',
+                  border: 'none',
+                  color: '#92400e',
+                  borderRadius: '8px',
+                  padding: '6px 16px',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.15)'
+                }}
+              >
+                End Maintenance Now
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Page content */}
         <main className="content-container">
           {currentPage === 'dashboard' && (
@@ -356,6 +470,14 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Global Maintenance Customer Preview Modal */}
+      {previewMaintenanceModalOpen && (
+        <MaintenancePreviewModal
+          settings={settings}
+          onClose={() => setPreviewMaintenanceModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

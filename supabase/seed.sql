@@ -5,7 +5,9 @@
 insert into public.store_settings (
     id, name, tagline, subtitle, address, whatsapp_number,
     operating_hours, free_delivery_threshold, delivery_fee,
-    about_text, guarantee_text
+    about_text, guarantee_text,
+    is_maintenance_mode, maintenance_title, maintenance_message,
+    maintenance_allow_browsing
 ) values (
     '00000000-0000-0000-0000-000000000001',
     'GREEN BASKET',
@@ -25,7 +27,11 @@ insert into public.store_settings (
     250.00,
     30.00,
     'Green Basket sources vegetables and fruits daily at 4:00 AM directly from local APMC mandis and organic farmer clusters. No cold-storage decay, zero middleman markup — only crisp, peak-fresh farm produce delivered to your doorstep within hours of procurement.',
-    '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.'
+    '100% Crisp & Clean Guarantee: If any item is bruised or unsatisfactory, WhatsApp us within 2 hours of delivery for an instant replacement or full refund without return hassle.',
+    false,
+    'Store Under Maintenance',
+    'We are currently restocking fresh produce from the APMC Mandi. Ordering will resume shortly!',
+    true
 ) on conflict (id) do nothing;
 
 -- 2. Insert Categories
