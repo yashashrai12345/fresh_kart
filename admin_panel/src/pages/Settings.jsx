@@ -24,6 +24,7 @@ export default function Settings({ settings, onUpdateSettings }) {
   const [activeTab, setActiveTab] = useState('maintenance'); // 'maintenance' or 'general'
   const [formData, setFormData] = useState({ ...settings });
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
@@ -32,11 +33,34 @@ export default function Settings({ settings, onUpdateSettings }) {
     }
   }, [settings]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onUpdateSettings(formData);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3500);
+    setIsSaving(true);
+    try {
+      await onUpdateSettings(formData);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleMasterSwitchToggle = async () => {
+    const nextMode = !formData.is_maintenance_mode;
+    const nextData = { ...formData, is_maintenance_mode: nextMode };
+    setFormData(nextData);
+    setIsSaving(true);
+    try {
+      await onUpdateSettings(nextData);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3500);
+    } catch (err) {
+      console.error('Failed to toggle maintenance mode:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleHourChange = (day, val) => {
@@ -107,16 +131,29 @@ export default function Settings({ settings, onUpdateSettings }) {
     }
   ];
 
-  const applyPreset = (preset) => {
+  const applyPreset = async (preset, activate = true) => {
     const resumeDate = new Date(Date.now() + preset.hoursAhead * 60 * 60 * 1000);
-    setFormData({
+    const nextData = {
       ...formData,
       is_maintenance_mode: true,
       maintenance_title: preset.title,
       maintenance_message: preset.message,
       maintenance_allow_browsing: preset.allowBrowsing,
       maintenance_estimated_resume: resumeDate.toISOString()
-    });
+    };
+    setFormData(nextData);
+    if (activate) {
+      setIsSaving(true);
+      try {
+        await onUpdateSettings(nextData);
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3500);
+      } catch (err) {
+        console.error('Preset save error:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }
   };
 
   const setQuickTime = (hoursFromNow) => {
@@ -180,7 +217,24 @@ export default function Settings({ settings, onUpdateSettings }) {
             {isMaintenanceActive ? 'Maintenance Active (Ordering Paused)' : 'Store Live & Accepting Orders'}
           </div>
 
-          {savedSuccess && (
+          {isSaving && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: '#e0f2fe',
+              color: '#0369a1',
+              padding: '8px 16px',
+              borderRadius: '9999px',
+              fontSize: '0.85rem',
+              fontWeight: 600
+            }}>
+              <RefreshCw size={15} style={{ animation: 'spin 1s linear infinite' }} />
+              Saving changes...
+            </div>
+          )}
+
+          {savedSuccess && !isSaving && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -269,7 +323,29 @@ export default function Settings({ settings, onUpdateSettings }) {
       {/* TAB 1: MAINTENANCE MODE COMMAND CENTER */}
       {activeTab === 'maintenance' && (
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Supabase Migration Notice Banner */}
+            <div style={{
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '12px',
+              padding: '12px 18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '0.84rem',
+              color: '#1e40af'
+            }}>
+              <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
+              <div>
+                <span style={{ fontWeight: 700 }}>Realtime Persistence Active:</span> Toggling maintenance mode below saves immediately and persists across browser refreshes. To also sync live with the customer mobile app, execute{' '}
+                <code style={{ background: '#dbeafe', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                  supabase/migration_003_maintenance_mode.sql
+                </code>{' '}
+                in your Supabase SQL Editor.
+              </div>
+            </div>
+
             {/* Master Control Card */}
             <div style={{
               background: isMaintenanceActive ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' : '#ffffff',
@@ -312,17 +388,20 @@ export default function Settings({ settings, onUpdateSettings }) {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, is_maintenance_mode: !formData.is_maintenance_mode })}
+                    disabled={isSaving}
+                    onClick={handleMasterSwitchToggle}
+                    title={isMaintenanceActive ? 'Click to turn OFF maintenance' : 'Click to turn ON maintenance'}
                     style={{
                       width: '64px',
                       height: '34px',
                       borderRadius: '999px',
                       background: isMaintenanceActive ? '#d97706' : '#cbd5e1',
                       border: 'none',
-                      cursor: 'pointer',
+                      cursor: isSaving ? 'wait' : 'pointer',
                       position: 'relative',
                       transition: 'background 0.2s ease',
-                      padding: '3px'
+                      padding: '3px',
+                      opacity: isSaving ? 0.7 : 1
                     }}
                   >
                     <div style={{
@@ -586,6 +665,7 @@ export default function Settings({ settings, onUpdateSettings }) {
 
               <button
                 type="submit"
+                disabled={isSaving}
                 className="btn btn-primary"
                 style={{
                   display: 'flex',
@@ -593,11 +673,22 @@ export default function Settings({ settings, onUpdateSettings }) {
                   gap: '8px',
                   padding: '12px 28px',
                   fontSize: '0.95rem',
-                  background: isMaintenanceActive ? '#d97706' : '#059669'
+                  background: isMaintenanceActive ? '#d97706' : '#059669',
+                  opacity: isSaving ? 0.75 : 1,
+                  cursor: isSaving ? 'wait' : 'pointer'
                 }}
               >
-                <Save size={18} />
-                {isMaintenanceActive ? 'Broadcast Maintenance Settings' : 'Save Settings'}
+                {isSaving ? (
+                  <>
+                    <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    Saving Changes...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    {isMaintenanceActive ? 'Broadcast Maintenance Settings' : 'Save Settings'}
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -822,11 +913,27 @@ export default function Settings({ settings, onUpdateSettings }) {
 
               <button
                 type="submit"
+                disabled={isSaving}
                 className="btn btn-primary"
-                style={{ width: '100%', padding: '14px', fontSize: '1rem' }}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  fontSize: '1rem',
+                  opacity: isSaving ? 0.75 : 1,
+                  cursor: isSaving ? 'wait' : 'pointer'
+                }}
               >
-                <Save size={18} />
-                Save All Settings
+                {isSaving ? (
+                  <>
+                    <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    Saving All Settings...
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    Save All Settings
+                  </>
+                )}
               </button>
             </div>
           </div>

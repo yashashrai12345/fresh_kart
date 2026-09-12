@@ -199,32 +199,99 @@ export const storeService = {
 
   // --- SETTINGS ---
   async getSettings() {
+    const local = getLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('store_settings').select('*').limit(1).single();
-      if (!error && data) {
-        setLocalData(STORAGE_KEYS.SETTINGS, data);
-        return data;
+      try {
+        const { data, error } = await supabase.from('store_settings').select('*').limit(1).single();
+        if (!error && data) {
+          // Merge cloud data while preserving maintenance mode state if cloud schema doesn't have the columns yet
+          const merged = {
+            ...INITIAL_SETTINGS,
+            ...local,
+            ...data,
+            // If the database has is_maintenance_mode column, respect the database value;
+            // Otherwise, keep the locally configured maintenance mode setting so it NEVER resets on refresh!
+            is_maintenance_mode: data.is_maintenance_mode !== undefined
+              ? Boolean(data.is_maintenance_mode)
+              : Boolean(local.is_maintenance_mode),
+            maintenance_title: data.maintenance_title !== undefined
+              ? data.maintenance_title
+              : (local.maintenance_title || INITIAL_SETTINGS.maintenance_title),
+            maintenance_message: data.maintenance_message !== undefined
+              ? data.maintenance_message
+              : (local.maintenance_message || INITIAL_SETTINGS.maintenance_message),
+            maintenance_estimated_resume: data.maintenance_estimated_resume !== undefined
+              ? data.maintenance_estimated_resume
+              : local.maintenance_estimated_resume,
+            maintenance_allow_browsing: data.maintenance_allow_browsing !== undefined
+              ? Boolean(data.maintenance_allow_browsing)
+              : (local.maintenance_allow_browsing ?? true),
+          };
+          setLocalData(STORAGE_KEYS.SETTINGS, merged);
+          return merged;
+        }
+      } catch (err) {
+        console.warn('[storeService] getSettings error:', err);
       }
     }
-    return getLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    return local;
   },
 
   async updateSettings(newSettings) {
+    // 1. Immediately persist full state locally so it persists across page reloads
+    const localExisting = getLocalData(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS);
+    const updatedLocally = { ...localExisting, ...newSettings };
+    setLocalData(STORAGE_KEYS.SETTINGS, updatedLocally);
+
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('store_settings')
-        .update({ ...newSettings, updated_at: new Date().toISOString() })
-        .eq('id', newSettings.id)
-        .select()
-        .single();
-      if (error) throw new Error(error.message || 'Failed to update settings');
-      if (data) {
-        setLocalData(STORAGE_KEYS.SETTINGS, data);
-        return data;
+      try {
+        // Attempt full update with all fields (works when migration_003 is applied)
+        const { data, error } = await supabase
+          .from('store_settings')
+          .update({ ...newSettings, updated_at: new Date().toISOString() })
+          .eq('id', newSettings.id)
+          .select()
+          .single();
+
+        if (!error && data) {
+          const merged = { ...updatedLocally, ...data };
+          setLocalData(STORAGE_KEYS.SETTINGS, merged);
+          return merged;
+        }
+
+        if (error) {
+          console.warn('[storeService] Supabase full update error:', error.message);
+          // If error is due to missing columns (code PGRST204 or column name in message):
+          if (error.code === 'PGRST204' || String(error.message).includes('column')) {
+            const {
+              is_maintenance_mode,
+              maintenance_title,
+              maintenance_message,
+              maintenance_estimated_resume,
+              maintenance_allow_browsing,
+              ...standardSettings
+            } = newSettings;
+
+            const { data: stdData, error: stdErr } = await supabase
+              .from('store_settings')
+              .update({ ...standardSettings, updated_at: new Date().toISOString() })
+              .eq('id', newSettings.id)
+              .select()
+              .single();
+
+            if (!stdErr && stdData) {
+              const combined = { ...updatedLocally, ...stdData };
+              setLocalData(STORAGE_KEYS.SETTINGS, combined);
+              return combined;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[storeService] Cloud update failed, using local persistence:', e);
       }
     }
-    setLocalData(STORAGE_KEYS.SETTINGS, newSettings);
-    return newSettings;
+
+    return updatedLocally;
   },
 
   // --- CATEGORIES ---

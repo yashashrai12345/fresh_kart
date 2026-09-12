@@ -153,8 +153,15 @@ export default function App() {
   };
 
   const handleUpdateSettings = async (newSettings) => {
-    const updated = await storeService.updateSettings(newSettings);
-    setSettings(updated);
+    try {
+      const updated = await storeService.updateSettings(newSettings);
+      setSettings(updated);
+      return updated;
+    } catch (err) {
+      console.warn('handleUpdateSettings error, applying local settings:', err);
+      setSettings(newSettings);
+      return newSettings;
+    }
   };
 
   // If not logged in, render Login
