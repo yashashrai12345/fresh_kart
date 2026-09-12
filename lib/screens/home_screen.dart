@@ -48,8 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
     final store = context.watch<StoreProvider>();
-    final wishlist = context.watch<WishlistProvider>();
-    final orderProv = context.watch<OrderProvider>();
 
     // Full-screen Maintenance Mode Lockout (if browsing is not allowed)
     if (store.settings.isMaintenanceMode && !store.settings.maintenanceAllowBrowsing) {
@@ -292,42 +290,46 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
 
                           // Action Buttons: Wishlist, Orders, Store Info
-                          IconButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const WishlistScreen(),
-                                ),
-                              );
-                            },
-                            icon: Badge(
-                              isLabelVisible: wishlist.wishlistIds.isNotEmpty,
-                              label: Text('${wishlist.wishlistIds.length}'),
-                              backgroundColor: AppTheme.danger,
-                              child: const Icon(Icons.favorite_outline_rounded,
-                                  size: 22),
+                          Consumer<WishlistProvider>(
+                            builder: (context, wishlist, _) => IconButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const WishlistScreen(),
+                                  ),
+                                );
+                              },
+                              icon: Badge(
+                                isLabelVisible: wishlist.wishlistIds.isNotEmpty,
+                                label: Text('${wishlist.wishlistIds.length}'),
+                                backgroundColor: AppTheme.danger,
+                                child: const Icon(Icons.favorite_outline_rounded,
+                                    size: 22),
+                              ),
+                              tooltip: 'Wishlist',
                             ),
-                            tooltip: 'Wishlist',
                           ),
 
-                          IconButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const OrdersScreen(),
-                                ),
-                              );
-                            },
-                            icon: Badge(
-                              isLabelVisible: orderProv.orders.isNotEmpty,
-                              label: Text('${orderProv.orders.length}'),
-                              backgroundColor: AppTheme.primary,
-                              child: const Icon(Icons.receipt_long_outlined,
-                                  size: 22),
+                          Consumer<OrderProvider>(
+                            builder: (context, orderProv, _) => IconButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const OrdersScreen(),
+                                  ),
+                                );
+                              },
+                              icon: Badge(
+                                isLabelVisible: orderProv.orders.isNotEmpty,
+                                label: Text('${orderProv.orders.length}'),
+                                backgroundColor: AppTheme.primary,
+                                child: const Icon(Icons.receipt_long_outlined,
+                                    size: 22),
+                              ),
+                              tooltip: 'My Orders',
                             ),
-                            tooltip: 'My Orders',
                           ),
 
                           IconButton(
@@ -602,6 +604,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   (context, index) {
                                     final product = products[index];
                                     return ProductCard(
+                                      key: ValueKey(product.id),
                                       product: product,
                                       onTap: () {
                                         ProductDetailSheet.show(
@@ -610,6 +613,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     );
                                   },
                                   childCount: products.length,
+                                  addRepaintBoundaries: true,
+                                  addAutomaticKeepAlives: false,
                                 ),
                               ),
                             ),

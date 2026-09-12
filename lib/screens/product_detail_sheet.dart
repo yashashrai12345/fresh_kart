@@ -109,6 +109,18 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                           child: CachedNetworkImage(
                             imageUrl: widget.product.photoUrl,
                             fit: BoxFit.cover,
+                            memCacheWidth: 720,
+                            memCacheHeight: 720,
+                            maxWidthDiskCache: 1000,
+                            maxHeightDiskCache: 1000,
+                            fadeInDuration: const Duration(milliseconds: 150),
+                            placeholder: (_, __) => Container(
+                              color: const Color(0xFFF1F5F9),
+                              child: const Center(
+                                child: Icon(Icons.image_outlined,
+                                    size: 40, color: Color(0xFFCBD5E1)),
+                              ),
+                            ),
                             errorWidget: (_, __, ___) => const Center(
                               child: Icon(Icons.eco,
                                   size: 60, color: AppTheme.primary),
@@ -440,6 +452,9 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                                       width: 60,
                                       height: 60,
                                       fit: BoxFit.cover,
+                                      memCacheWidth: 160,
+                                      memCacheHeight: 160,
+                                      fadeInDuration: const Duration(milliseconds: 100),
                                     ),
                                   ),
                                   const SizedBox(width: 10),

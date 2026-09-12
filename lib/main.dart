@@ -18,6 +18,10 @@ import 'widgets/auth_gate.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Limit memory image cache to 100 images and 50MB RAM to prevent OutOfMemory/GC pauses
+  PaintingBinding.instance.imageCache.maximumSize = 100;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20;
+
   // Initialize storage, Supabase, Firebase, and AdMob
   await StorageService.init();
   await SupabaseService.init();

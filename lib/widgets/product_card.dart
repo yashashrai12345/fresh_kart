@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
+import '../models/cart_item_model.dart';
 import '../models/product_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
@@ -18,10 +19,12 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
-    final wishlist = context.watch<WishlistProvider>();
-    final isWishlisted = wishlist.isInWishlist(product.id);
-    final cartItem = cart.getFirstItemForProduct(product.id);
+    final isWishlisted = context.select<WishlistProvider, bool>(
+      (w) => w.isInWishlist(product.id),
+    );
+    final cartItem = context.select<CartProvider, CartItemModel?>(
+      (c) => c.getFirstItemForProduct(product.id),
+    );
     final isAdded = cartItem != null;
 
     return GestureDetector(
@@ -55,13 +58,18 @@ class ProductCard extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: product.photoUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.primary.withOpacity(0.5),
+                          memCacheWidth: 350,
+                          memCacheHeight: 350,
+                          maxWidthDiskCache: 700,
+                          maxHeightDiskCache: 700,
+                          fadeInDuration: const Duration(milliseconds: 120),
+                          placeholder: (context, url) => Container(
+                            color: const Color(0xFFF1F5F9),
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_outlined,
+                                color: Color(0xFFCBD5E1),
+                                size: 24,
                               ),
                             ),
                           ),
@@ -69,7 +77,7 @@ class ProductCard extends StatelessWidget {
                             child: Icon(
                               Icons.eco,
                               color: AppTheme.primary,
-                              size: 40,
+                              size: 36,
                             ),
                           ),
                         ),
@@ -212,7 +220,8 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => wishlist.toggle(product.id),
+                          onTap: () =>
+                              context.read<WishlistProvider>().toggle(product.id),
                           child: Icon(
                             isWishlisted
                                 ? Icons.favorite_rounded
@@ -286,7 +295,7 @@ class ProductCard extends StatelessWidget {
                         else if (!isAdded)
                           InkWell(
                             onTap: () {
-                              cart.addItem(
+                              context.read<CartProvider>().addItem(
                                 product: product,
                                 portionLabel: product.isKgUnit ? '1 kg' : '1 unit',
                                 portionMultiplier: 1.0,
@@ -328,7 +337,9 @@ class ProductCard extends StatelessWidget {
                             child: Row(
                               children: [
                                 InkWell(
-                                  onTap: () => cart.decrement(cartItem.cartKey),
+                                  onTap: () => context
+                                      .read<CartProvider>()
+                                      .decrement(cartItem.cartKey),
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 4),
@@ -345,7 +356,9 @@ class ProductCard extends StatelessWidget {
                                   ),
                                 ),
                                 InkWell(
-                                  onTap: () => cart.increment(cartItem.cartKey),
+                                  onTap: () => context
+                                      .read<CartProvider>()
+                                      .increment(cartItem.cartKey),
                                   child: const Padding(
                                     padding: EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 4),
