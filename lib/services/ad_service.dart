@@ -11,9 +11,9 @@ class AdService {
   static const String testAndroidBannerId = 'ca-app-pub-3940256099942544/6300978111';
   static const String testIosBannerId = 'ca-app-pub-3940256099942544/2934735716';
 
-  /// Toggle this to true if you want to test your real production ad unit before Play Store release.
-  /// (Ensure your device is registered as a Test Device in AdMob console).
-  static const bool useLiveAdsInDebug = false;
+  /// Set to true while testing on physical phone so Google's official Test Ads always appear.
+  /// Set to false when you are ready to build the final bundle for Google Play Store upload!
+  static const bool forceTestAds = true;
 
   static bool _initialized = false;
   static bool get isInitialized => _initialized;
@@ -32,15 +32,15 @@ class AdService {
 
   /// Returns the appropriate Banner Ad Unit ID based on platform and build mode
   static String get bannerAdUnitId {
-    if (kReleaseMode || useLiveAdsInDebug) {
-      // Production live banner ID
-      if (Platform.isAndroid) {
-        return androidBannerId;
-      }
-      return testIosBannerId; // Fallback for iOS until iOS ad unit is created
+    // If testing ads is requested (or in debug mode), always return Google's official Test Ad ID
+    if (forceTestAds || !kReleaseMode) {
+      return Platform.isAndroid ? testAndroidBannerId : testIosBannerId;
     }
 
-    // Debug mode: Return official Google Test Ad ID
-    return Platform.isAndroid ? testAndroidBannerId : testIosBannerId;
+    // Production release mode for Google Play Store
+    if (Platform.isAndroid) {
+      return androidBannerId;
+    }
+    return testIosBannerId;
   }
 }
